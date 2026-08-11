@@ -1,6 +1,6 @@
 import React, { useId } from 'react';
 
-// "DOCX Editor by EigenPal" lockup — the exact same mark used in the
+// "IntelliEditor by EigenPal" lockup — the exact same mark used in the
 // docx-editor.dev site header (DocxIcon + wordmark + EigenpalLogo). Kept in
 // `examples/shared` so the React + Vue previews show an identical brand.
 
@@ -105,7 +105,7 @@ export function BrandLogo() {
         gap: '8px',
         textDecoration: 'none',
       }}
-      title="DOCX Editor by EigenPal"
+      title="IntelliEditor by EigenPal"
     >
       <DocxIcon />
       <span style={{ display: 'inline-flex', flexDirection: 'column', gap: '1px' }}>
@@ -119,7 +119,7 @@ export function BrandLogo() {
             whiteSpace: 'nowrap',
           }}
         >
-          DOCX Editor
+          IntelliEditor
         </span>
         <span
           style={{
@@ -133,8 +133,7 @@ export function BrandLogo() {
           }}
         >
           by
-          <EigenpalLogo />
-          <span style={{ fontWeight: 600, color: 'var(--doc-text)' }}>EigenPal</span>
+          <span style={{ fontWeight: 600, color: 'var(--doc-text)' }}>jiresse Alfred</span>
         </span>
       </span>
     </a>
