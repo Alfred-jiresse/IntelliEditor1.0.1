@@ -22,6 +22,7 @@ import {
   useFontFamily,
   type EditorCaret,
 } from '@docx-editor.dev/react';
+import RulesPanel, { processRulesFile } from '../../../packages/react/src/components/RulesPanel';
 // PRO: comments + tracked changes ship in @docx-editor.dev/pro. Register the
 // review module on the Root and mount the pane; without the module the same
 // document still opens (final-state view) and the review toolbar controls
@@ -382,6 +383,7 @@ function EditorChrome({
   // a menu handler is safe.
   const caret = useEditorCaret();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const rulesInputRef = useRef<HTMLInputElement | null>(null);
   const [showPageSetup, setShowPageSetup] = useState(false);
 
   const openFile = (file: File) => {
@@ -523,6 +525,39 @@ function EditorChrome({
 
         <div className="demo-header__right">
           <ThemeToggle value={colorMode} onChange={onColorModeChange} />
+          <button
+            type="button"
+            style={DEMO_SECONDARY_BUTTON}
+            onClick={() => rulesInputRef.current?.click()}
+          >
+            Upload Rules
+          </button>
+          <input
+            ref={rulesInputRef}
+            type="file"
+            accept="application/json"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              try {
+                const parsed = await processRulesFile(file);
+                localStorage.setItem('intelli:rules', JSON.stringify(parsed));
+                // notify other tabs and components
+                window.dispatchEvent(new StorageEvent('storage', { key: 'intelli:rules', newValue: JSON.stringify(parsed) } as any));
+                // small visual confirmation
+                void (async () => {
+                  /* eslint-disable no-alert */
+                  alert('Rules uploaded');
+                })();
+              } catch (err) {
+                alert('Failed to parse rules: ' + (err instanceof Error ? err.message : String(err)));
+              } finally {
+                e.currentTarget.value = '';
+              }
+            }}
+          />
+
           <button
             type="button"
             style={DEMO_PRIMARY_BUTTON}
@@ -691,6 +726,10 @@ export function ComposedEditorDemo({ fixtureUrl }: { fixtureUrl: string }) {
               paneWidth={280}
             />
             <DocxEditor.Viewport className="demo-viewport">
+              {/* Right-side rules rail mounted inside the main area; the panel positions itself */}
+              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 320, pointerEvents: 'auto' }} aria-hidden={false}>
+                <RulesPanel />
+              </div>
               {/* The vertical ruler rides INSIDE the scroll container as an
                   absolutely positioned child, so it scrolls with the document and
                   its top offset lines up with the first page's top edge. */}
