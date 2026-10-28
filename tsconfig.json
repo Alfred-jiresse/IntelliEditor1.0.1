@@ -20,15 +20,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./packages/react/src/*"],
-      "@docx-editor.dev/react": ["./packages/react/src/index.ts"]
+      "@docx-editor.dev/react": ["./packages/react/src/index.ts"],
+      "@intellieditor/conformity": ["./packages/conformity/src/index.ts"]
     }
   },
-  "include": [
-    "src",
-    "packages/react/src",
-    "examples/shared",
-    "examples/vite",
-    "examples/plugins"
-  ],
+  "include": ["src", "packages/react/src", "examples/shared", "examples/vite", "examples/plugins"],
   "exclude": ["node_modules", "dist", "examples/nextjs", "examples/remix", "examples/astro"]
 }
