@@ -105,6 +105,10 @@ export default defineConfig(async () => {
               replacement: path.join(monorepoRoot, 'packages/react/dist/index.mjs'),
             },
             { find: '@', replacement: path.join(monorepoRoot, 'packages/react/src') },
+            {
+              find: '@intellieditor/conformity',
+              replacement: path.join(monorepoRoot, 'packages/conformity/src/index.ts'),
+            },
           ]
         : [
             // Resolve package imports to source for live development
@@ -150,6 +154,11 @@ export default defineConfig(async () => {
             {
               find: '@docx-editor.dev/fonts',
               replacement: path.join(monorepoRoot, 'packages/fonts/src/index.ts'),
+            },
+            // IntelliEditor's conformity engine: workspace source, like every package above.
+            {
+              find: '@intellieditor/conformity',
+              replacement: path.join(monorepoRoot, 'packages/conformity/src/index.ts'),
             },
             {
               find: '@docx-editor.dev/i18n',

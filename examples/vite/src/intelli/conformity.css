@@ -1,0 +1,458 @@
+/* IntelliEditor conformity UI. Theme tokens only (--doc-*), so light/dark follow the editor. */
+
+/* ── Status colour, shared by the header badge and the panel ─────────────── */
+[data-level='conforme'] {
+  --intelli-tone: var(--doc-success);
+  --intelli-tone-bg: var(--doc-success-bg);
+}
+[data-level='a-revoir'] {
+  --intelli-tone: var(--doc-warning);
+  --intelli-tone-bg: var(--doc-warning-bg);
+}
+[data-level='non-conforme'] {
+  --intelli-tone: var(--doc-error);
+  --intelli-tone-bg: var(--doc-error-bg);
+}
+[data-level='pending'] {
+  --intelli-tone: var(--doc-text-subtle);
+  --intelli-tone-bg: var(--doc-bg-subtle);
+}
+
+.intelli-status__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--intelli-tone);
+  flex: none;
+}
+
+.intelli-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--doc-border);
+  border-radius: 6px;
+  background: var(--intelli-tone-bg);
+  color: var(--doc-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.intelli-badge[aria-pressed='true'] {
+  border-color: var(--intelli-tone);
+}
+
+/* ── Panel ─────────────────────────────────────────────────────────────── */
+.intelli-panel {
+  width: 360px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--doc-border);
+  background: var(--doc-surface);
+  color: var(--doc-text);
+  font-size: 13px;
+  z-index: var(--doc-z-chrome, 10);
+}
+@media (max-width: 900px) {
+  .intelli-panel {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: min(360px, 100%);
+    box-shadow: var(--doc-shadow-lg);
+  }
+}
+
+.intelli-panel__header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--doc-border-light);
+}
+.intelli-panel__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.intelli-panel__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.intelli-icon-button {
+  border: none;
+  background: none;
+  color: var(--doc-text-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.intelli-icon-button:hover {
+  background: var(--doc-bg-hover);
+}
+
+.intelli-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--intelli-tone-bg);
+  border: 1px solid var(--intelli-tone);
+}
+.intelli-status .intelli-status__dot {
+  width: 12px;
+  height: 12px;
+}
+.intelli-status__label {
+  font-weight: 600;
+  font-size: 14px;
+  flex: 1;
+}
+.intelli-status__score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.intelli-panel__meta {
+  margin: 8px 0 0;
+  color: var(--doc-text-muted);
+}
+.intelli-panel__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+.intelli-panel__time {
+  color: var(--doc-text-subtle);
+  font-size: 12px;
+}
+.intelli-panel__error {
+  margin: 8px 0 0;
+  color: var(--doc-error);
+}
+.intelli-panel__notice {
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--doc-bg-subtle);
+  cursor: pointer;
+}
+
+.intelli-button {
+  padding: 6px 12px;
+  border: 1px solid var(--doc-border);
+  border-radius: 6px;
+  background: var(--doc-surface);
+  color: var(--doc-text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.intelli-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.intelli-button--primary {
+  background: var(--doc-primary);
+  border-color: var(--doc-primary);
+  color: var(--doc-on-primary);
+}
+.intelli-button--primary:hover:not(:disabled) {
+  background: var(--doc-primary-hover);
+}
+
+.intelli-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--doc-border-light);
+  padding: 0 8px;
+}
+.intelli-tab {
+  flex: 1;
+  padding: 9px 6px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--doc-text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.intelli-tab[aria-selected='true'] {
+  color: var(--doc-primary);
+  border-bottom-color: var(--doc-primary);
+}
+
+.intelli-panel__content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 0 16px;
+}
+.intelli-panel__empty {
+  margin: 24px 16px;
+  color: var(--doc-text-muted);
+  text-align: center;
+}
+
+.intelli-group {
+  padding: 4px 0;
+}
+.intelli-group__title {
+  margin: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--doc-text-subtle);
+}
+.intelli-rules,
+.intelli-findings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.intelli-rule[data-tone='error'] {
+  --intelli-tone: var(--doc-error);
+  --intelli-tone-bg: var(--doc-error-bg);
+}
+.intelli-rule[data-tone='warning'] {
+  --intelli-tone: var(--doc-warning);
+  --intelli-tone-bg: var(--doc-warning-bg);
+}
+.intelli-rule[data-tone='info'] {
+  --intelli-tone: var(--doc-primary);
+  --intelli-tone-bg: var(--doc-bg-subtle);
+}
+.intelli-rule[data-tone='pass'] {
+  --intelli-tone: var(--doc-success);
+  --intelli-tone-bg: var(--doc-success-bg);
+}
+.intelli-rule[data-tone='skip'] {
+  --intelli-tone: var(--doc-text-subtle);
+  --intelli-tone-bg: var(--doc-bg-subtle);
+}
+
+.intelli-rule__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  border: none;
+  background: none;
+  color: var(--doc-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.intelli-rule__head:hover {
+  background: var(--doc-bg-hover);
+}
+.intelli-rule__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--intelli-tone);
+  background: var(--intelli-tone-bg);
+  border: 1px solid var(--intelli-tone);
+}
+.intelli-rule__title {
+  flex: 1;
+}
+.intelli-rule__badge {
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--intelli-tone);
+  background: var(--intelli-tone-bg);
+}
+.intelli-rule__body {
+  padding: 2px 16px 10px 44px;
+}
+.intelli-rule__reference {
+  margin: 0 0 6px;
+  color: var(--doc-text-muted);
+  font-style: italic;
+}
+.intelli-rule__detail {
+  margin: 0 0 6px;
+  color: var(--doc-text-muted);
+}
+
+.intelli-finding {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 6px 0;
+  border-top: 1px dashed var(--doc-border-light);
+}
+.intelli-finding__text {
+  color: var(--doc-text);
+  line-height: 1.4;
+}
+.intelli-finding__text--link {
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+.intelli-finding__text--link:hover {
+  color: var(--doc-link);
+  text-decoration: underline;
+}
+.intelli-finding__fix {
+  padding: 3px 8px;
+  border: 1px solid var(--doc-primary);
+  border-radius: 5px;
+  background: none;
+  color: var(--doc-primary);
+  font-size: 12px;
+  cursor: pointer;
+}
+.intelli-finding__fix:hover {
+  background: var(--doc-primary-light);
+}
+
+.intelli-panel__footer {
+  border-top: 1px solid var(--doc-border-light);
+  padding: 10px 16px 12px;
+}
+.intelli-panel__profile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.intelli-panel__profile-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--doc-text-subtle);
+}
+.intelli-panel__profile-name {
+  font-weight: 500;
+}
+.intelli-panel__profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 6px;
+}
+.intelli-link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--doc-link);
+  font-size: 12px;
+  cursor: pointer;
+}
+.intelli-link:hover {
+  text-decoration: underline;
+}
+
+/* ── « Nouveau TFC » dialog ────────────────────────────────────────────── */
+.intelli-dialog__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--doc-z-overlay, 1000);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--doc-overlay);
+}
+.intelli-dialog {
+  width: min(640px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 20px 22px;
+  border-radius: 10px;
+  background: var(--doc-surface);
+  color: var(--doc-text);
+  box-shadow: var(--doc-shadow-lg);
+  font-size: 13px;
+}
+.intelli-dialog__title {
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+.intelli-dialog__intro {
+  margin: 0 0 14px;
+  color: var(--doc-text-muted);
+  line-height: 1.45;
+}
+.intelli-dialog__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 14px;
+}
+@media (max-width: 560px) {
+  .intelli-dialog__grid {
+    grid-template-columns: 1fr;
+  }
+}
+.intelli-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.intelli-field--wide {
+  grid-column: 1 / -1;
+}
+.intelli-field__label {
+  font-size: 12px;
+  color: var(--doc-text-muted);
+}
+.intelli-field__input {
+  padding: 7px 9px;
+  border: 1px solid var(--doc-border-input);
+  border-radius: 6px;
+  background: var(--doc-bg-input);
+  color: var(--doc-text);
+  font-size: 13px;
+}
+.intelli-field__input:focus {
+  outline: 2px solid var(--doc-focus-ring);
+  outline-offset: 0;
+}
+.intelli-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+/* Academic tools: caption and page-numbering dialogs. */
+.intelli-dialog--compact {
+  width: min(480px, 100%);
+}
+.intelli-dialog__hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--doc-text-muted);
+}
+.intelli-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--doc-text);
+}
+.intelli-choice__number {
+  width: 88px;
+}

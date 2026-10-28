@@ -11,7 +11,12 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": true
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@intellieditor/conformity": ["../../packages/conformity/src/index.ts"],
+      "@docx-editor.dev/core/store": ["../../packages/core/src/store/index.ts"]
+    }
   },
   "include": ["src", "../shared"]
 }

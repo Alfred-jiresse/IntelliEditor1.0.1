@@ -22,7 +22,6 @@ import {
   useFontFamily,
   type EditorCaret,
 } from '@docx-editor.dev/react';
-import RulesPanel, { processRulesFile } from '../../../packages/react/src/components/RulesPanel';
 // PRO: comments + tracked changes ship in @docx-editor.dev/pro. Register the
 // review module on the Root and mount the pane; without the module the same
 // document still opens (final-state view) and the review toolbar controls
@@ -35,6 +34,20 @@ import { BrandLogo } from '../../shared/BrandLogo';
 // import { AdapterSwitcher } from '../../shared/AdapterSwitcher';
 import { ExampleSwitcher } from '../../shared/ExampleSwitcher';
 import { ThemeToggle } from './ThemeToggle';
+// IntelliEditor: the conformity engine's UI (panel, header badge, « Nouveau TFC »).
+import {
+  ACADEMIC_TEXT,
+  AcademicDialogs,
+  AcademicInsertRows,
+  ConformityPanel,
+  ConformityProvider,
+  fetchSample,
+  IntelliHeaderActions,
+  SAMPLES,
+  useConformity,
+  type AcademicDialog,
+  type SampleId,
+} from './intelli';
 import { DrawingsE2eBridge } from './DrawingsE2eBridge';
 import { DEMO_BUTTON, DEMO_PRIMARY_BUTTON, DEMO_SECONDARY_BUTTON, keepCaret } from './demoButtons';
 import {
@@ -368,12 +381,16 @@ function EditorChrome({
   colorMode,
   onColorModeChange,
   onInsertCitation,
+  conformityOpen,
+  onToggleConformity,
 }: {
   title: string;
   onTitleChange: (next: string) => void;
   colorMode: 'light' | 'dark';
   onColorModeChange: (next: 'light' | 'dark') => void;
   onInsertCitation: (at: EditorCaret | null) => void;
+  conformityOpen: boolean;
+  onToggleConformity: () => void;
 }) {
   const editor = useDocxEditor();
   // Where the caret is, as a paragraph and an offset — the shape the write APIs take as
@@ -383,8 +400,10 @@ function EditorChrome({
   // a menu handler is safe.
   const caret = useEditorCaret();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const rulesInputRef = useRef<HTMLInputElement | null>(null);
+  // A freshly loaded document has to be re-checked: `load` emits no change event.
+  const { documentLoaded } = useConformity();
   const [showPageSetup, setShowPageSetup] = useState(false);
+  const [academicDialog, setAcademicDialog] = useState<AcademicDialog>(null);
 
   const openFile = (file: File) => {
     // The title follows the opened file, so the header names the document actually
@@ -392,9 +411,24 @@ function EditorChrome({
     onTitleChange(file.name.replace(/\.docx$/i, ''));
     void file.arrayBuffer().then((buffer) => {
       editor?.load(new Uint8Array(buffer));
+      documentLoaded();
     });
   };
-  const newDocument = () => editor?.load(blankDocumentBytes());
+  const newDocument = () => {
+    editor?.load(blankDocumentBytes());
+    documentLoaded();
+  };
+  const openSample = (id: SampleId) => {
+    void fetchSample(id)
+      .then((bytes) => {
+        editor?.load(bytes);
+        onTitleChange(SAMPLES[id].file.replace(/\.docx$/, ''));
+        documentLoaded();
+      })
+      .catch((error: unknown) =>
+        window.alert(error instanceof Error ? error.message : String(error))
+      );
+  };
   const saveDocument = () => {
     void editor?.save().then((buffer) => {
       const base = title.trim() || 'document';
@@ -474,16 +508,25 @@ function EditorChrome({
               </DocxEditor.Menu.Row>
               <DocxEditor.Menu.Save />
               <DocxEditor.Menu.Separator />
+              {(Object.keys(SAMPLES) as SampleId[]).map((id) => (
+                <DocxEditor.Menu.Row key={id} onSelect={() => openSample(id)} disabled={!editor}>
+                  {SAMPLES[id].label}
+                </DocxEditor.Menu.Row>
+              ))}
+              <DocxEditor.Menu.Separator />
               <DocxEditor.Menu.PageSetup />
-            </DocxEditor.Menu.File>
-            {/* Row-level override: the packaged rows stay, one is swapped in place. */}
-            <DocxEditor.Menu.Insert>
               <DocxEditor.Menu.Row
-                icon={<span aria-hidden="true">✎</span>}
-                onSelect={() => window.alert('A host action, in the packaged menu.')}
+                onSelect={() => setAcademicDialog('numbering')}
+                disabled={!editor}
               >
-                Clause library
+                {ACADEMIC_TEXT.pageNumbering}
               </DocxEditor.Menu.Row>
+            </DocxEditor.Menu.File>
+            {/* The packaged rows stay; picture insertion is a host decision, placed here
+                (logo, figures). */}
+            <DocxEditor.Menu.Insert>
+              <DocxEditor.Menu.Entry entry={{ kind: 'item', slot: 'image.insert' }} />
+              <AcademicInsertRows onOpen={setAcademicDialog} />
             </DocxEditor.Menu.Insert>
             {/* Help is the host's: drop the packaged report row, keep the menu. */}
             <DocxEditor.Menu.Help>
@@ -525,39 +568,11 @@ function EditorChrome({
 
         <div className="demo-header__right">
           <ThemeToggle value={colorMode} onChange={onColorModeChange} />
-          <button
-            type="button"
-            style={DEMO_SECONDARY_BUTTON}
-            onClick={() => rulesInputRef.current?.click()}
-          >
-            Upload Rules
-          </button>
-          <input
-            ref={rulesInputRef}
-            type="file"
-            accept="application/json"
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              try {
-                const parsed = await processRulesFile(file);
-                localStorage.setItem('intelli:rules', JSON.stringify(parsed));
-                // notify other tabs and components
-                window.dispatchEvent(new StorageEvent('storage', { key: 'intelli:rules', newValue: JSON.stringify(parsed) } as any));
-                // small visual confirmation
-                void (async () => {
-                  /* eslint-disable no-alert */
-                  alert('Rules uploaded');
-                })();
-              } catch (err) {
-                alert('Failed to parse rules: ' + (err instanceof Error ? err.message : String(err)));
-              } finally {
-                e.currentTarget.value = '';
-              }
-            }}
+          <IntelliHeaderActions
+            panelOpen={conformityOpen}
+            onTogglePanel={onToggleConformity}
+            onTitleChange={onTitleChange}
           />
-
           <button
             type="button"
             style={DEMO_PRIMARY_BUTTON}
@@ -630,6 +645,7 @@ function EditorChrome({
 
       {/* File > Page setup: the library dialog, applied as one undo step. */}
       <DocxEditor.PageSetupDialog open={showPageSetup} onClose={() => setShowPageSetup(false)} />
+      <AcademicDialogs open={academicDialog} onClose={() => setAcademicDialog(null)} />
     </div>
   );
 }
@@ -665,6 +681,8 @@ export function ComposedEditorDemo({ fixtureUrl }: { fixtureUrl: string }) {
         ?.replace(/\.docx$/i, '') ?? 'Document'
   );
   const [showOutline, setShowOutline] = useState(false);
+  // The conformity panel is IntelliEditor's main surface: open by default.
+  const [showConformity, setShowConformity] = useState(true);
   // The citation details card, owned HERE so both openers share it: a click on the chip
   // (`CustomNodeChrome.onNodeClick`) and the context menu's Edit row (`onEditNode`).
   const [citationCard, setCitationCard] = useState<CitationCard | null>(null);
@@ -705,88 +723,89 @@ export function ComposedEditorDemo({ fixtureUrl }: { fixtureUrl: string }) {
           {...(fonts ? { fonts } : {})}
           onFontError={(error) => console.warn(`[fonts] ${error.code}: ${error.message}`)}
         >
-          <EditorChrome
-            title={title}
-            onTitleChange={setTitle}
-            colorMode={colorMode}
-            onColorModeChange={setColorMode}
-            onInsertCitation={(at) => setCitationForm({ mode: 'insert', at })}
-          />
-          <RulerRow />
-          {/* The viewport stays FULL-WIDTH so the vertical ruler (an absolute
+          <ConformityProvider>
+            <EditorChrome
+              title={title}
+              onTitleChange={setTitle}
+              colorMode={colorMode}
+              onColorModeChange={setColorMode}
+              onInsertCitation={(at) => setCitationForm({ mode: 'insert', at })}
+              conformityOpen={showConformity}
+              onToggleConformity={() => setShowConformity((open) => !open)}
+            />
+            <RulerRow />
+            {/* The viewport stays FULL-WIDTH so the vertical ruler (an absolute
               child of the scroll container, pinned at left: 0) never moves. The
               navigation pane floats over the gutter to the LEFT of the centered
               page and moves the document only when the window is too narrow to
               hold both — it owns that measurement, so the demo supplies nothing
               but the positioned row it anchors to. */}
-          <div className="demo-main">
-            <DocxEditor.Navigation
-              open={showOutline}
-              onOpenChange={setShowOutline}
-              paneWidth={280}
-            />
-            <DocxEditor.Viewport className="demo-viewport">
-              {/* Right-side rules rail mounted inside the main area; the panel positions itself */}
-              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 320, pointerEvents: 'auto' }} aria-hidden={false}>
-                <RulesPanel />
-              </div>
-              {/* The vertical ruler rides INSIDE the scroll container as an
+            <div className="demo-main">
+              <DocxEditor.Navigation
+                open={showOutline}
+                onOpenChange={setShowOutline}
+                paneWidth={280}
+              />
+              <DocxEditor.Viewport className="demo-viewport">
+                {/* The vertical ruler rides INSIDE the scroll container as an
                   absolutely positioned child, so it scrolls with the document and
                   its top offset lines up with the first page's top edge. */}
-              <div className="demo-vruler" aria-hidden="true">
-                <DocxEditor.VerticalRuler />
-              </div>
-              {/* Furniture / note chrome — sugar `<DocxEditor chrome>` mounts these; a
+                <div className="demo-vruler" aria-hidden="true">
+                  <DocxEditor.VerticalRuler />
+                </div>
+                {/* Furniture / note chrome — sugar `<DocxEditor chrome>` mounts these; a
                   composed tree must place them by name or enter/exit has no overlay UI. */}
-              <DocxEditor.HeaderFooterChrome />
-              <DocxEditor.NotesChrome />
-              <DocxEditor.Content />
-              {/* The right-click menu, with the PRO custom-node section on top: pointing
+                <DocxEditor.HeaderFooterChrome />
+                <DocxEditor.NotesChrome />
+                <DocxEditor.Content />
+                {/* The right-click menu, with the PRO custom-node section on top: pointing
                   at a citation chip shows its data and "Edit Citation" above the packaged
                   rows. Chips are content-locked, so the menu is the editing entry point. */}
-              <DocxEditor.ContextMenu>
-                <CustomNodeContextMenu
-                  onEditNode={(node) =>
-                    node.nodeId
-                      ? setCitationForm({
-                          mode: 'edit',
-                          nodeId: node.nodeId,
-                          data: node.data,
-                        })
-                      : setCitationCard(citationCardAt(node, 'open'))
-                  }
-                />
-              </DocxEditor.ContextMenu>
-              <DrawingsE2eBridge />
-              {/* The link popover. Inside the viewport so it stays with the page while
+                <DocxEditor.ContextMenu>
+                  <CustomNodeContextMenu
+                    onEditNode={(node) =>
+                      node.nodeId
+                        ? setCitationForm({
+                            mode: 'edit',
+                            nodeId: node.nodeId,
+                            data: node.data,
+                          })
+                        : setCitationCard(citationCardAt(node, 'open'))
+                    }
+                  />
+                </DocxEditor.ContextMenu>
+                <DrawingsE2eBridge />
+                {/* The link popover. Inside the viewport so it stays with the page while
                   scrolling. `<DocxEditor>` mounts it for you; a composition like this one
                   places it by name, exactly like the rulers above. */}
-              <DocxEditor.HyperLink />
-              {/* The review rail (PRO): tracked changes and comments as cards beside the
+                <DocxEditor.HyperLink />
+                {/* The review rail (PRO): tracked changes and comments as cards beside the
                   page, with accept / reject / reply. Imported from
                   `@docx-editor.dev/pro/react` and enabled by the `reviewModule()` on the
                   Root. Inside the viewport for the same reason as the popover — it
                   scrolls with the document rather than chasing it. */}
-              <DocxEditorReview card={{ className: 'demo-review-card' }}>
-                {/* Host content inside every card: `useReviewItem()` scopes it to
+                <DocxEditorReview card={{ className: 'demo-review-card' }}>
+                  {/* Host content inside every card: `useReviewItem()` scopes it to
                     citation cards, the packaged parts stay. A custom node's card carries
                     `data-node-name`, so `demo-review-card[data-node-name='citation']`
                     styles citations without inspecting its own children to find them. */}
-                <CitationCardActions />
-              </DocxEditorReview>
-            </DocxEditor.Viewport>
-            <DocxEditor.PageNumber />
-            {/* Floating diagnostics chrome, above the overlay panels. */}
-            <PerfHud />
-            <CitationPopover
-              card={citationCard}
-              onOpen={setCitationCard}
-              onClose={closeCitationCard}
-            />
-            {citationForm ? (
-              <CitationDialog form={citationForm} onClose={closeCitationForm} />
-            ) : null}
-          </div>
+                  <CitationCardActions />
+                </DocxEditorReview>
+              </DocxEditor.Viewport>
+              {showConformity ? <ConformityPanel onClose={() => setShowConformity(false)} /> : null}
+              <DocxEditor.PageNumber />
+              {/* Floating diagnostics chrome, above the overlay panels. */}
+              <PerfHud />
+              <CitationPopover
+                card={citationCard}
+                onOpen={setCitationCard}
+                onClose={closeCitationCard}
+              />
+              {citationForm ? (
+                <CitationDialog form={citationForm} onClose={closeCitationForm} />
+              ) : null}
+            </div>
+          </ConformityProvider>
         </DocxEditor.Root>
       ) : loadError ? (
         // A failed fetch is NOT a loading state: it is terminal, and routing it through
