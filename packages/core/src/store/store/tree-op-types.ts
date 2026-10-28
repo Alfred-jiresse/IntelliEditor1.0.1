@@ -157,6 +157,14 @@ export interface RevisionAttributionInput {
   readonly date?: string;
 }
 
+/** The page-number formats a section can be given (`ST_NumberFormat` subset Word offers). */
+export type SectionPageNumberFormat =
+  | 'decimal'
+  | 'lowerRoman'
+  | 'upperRoman'
+  | 'lowerLetter'
+  | 'upperLetter';
+
 /**
  * Every mutation the store accepts, as one JSON-safe discriminated union.
  *
@@ -396,6 +404,13 @@ export type TreeDocOp =
       readonly marginRightTwips?: number;
       readonly marginBottomTwips?: number;
       readonly marginLeftTwips?: number;
+      /** `w:pgNumType/@w:fmt`: how the section's PAGE fields display. */
+      readonly pageNumberFormat?: SectionPageNumberFormat;
+      /**
+       * `w:pgNumType/@w:start`: the number the section's first page restarts at, or `null` to
+       * continue from the previous section (the attribute is removed).
+       */
+      readonly pageNumberStart?: number | null;
       /**
        * Word's "Apply to: This section": update only the section GOVERNING this
        * paragraph — the nearest mid-body `w:sectPr` at or after it, else the body-level
@@ -885,6 +900,30 @@ export type TreeDocOp =
         readonly paragraphId: string;
         readonly pageNumberText: string;
       }[];
+    }
+  | {
+      /**
+       * Insert a caption paragraph — `<label> <chapterPrefix>` + a `SEQ <label>` field whose
+       * cached result is `number` + ` <text>` — above or below a body block.
+       */
+      readonly op: 'insertCaption';
+      readonly anchorBlockId: string;
+      readonly position: 'above' | 'below';
+      readonly label: string;
+      readonly text: string;
+      readonly chapterPrefix: string;
+      readonly number: string;
+      readonly styleId?: string;
+    }
+  | {
+      /** Rewrite caption numbers (`SEQ` cached results and the chapter before them). */
+      readonly op: 'setCaptionNumbers';
+      readonly updates: readonly {
+        readonly paragraphId: string;
+        /** `null` leaves the text before the field as it is. */
+        readonly chapterPrefix: string | null;
+        readonly number: string;
+      }[];
     };
 
 /** Drawing mutation ops from typed-drawings-and-images task 11. */
@@ -978,6 +1017,8 @@ export const TREE_DOC_OP_KINDS = [
   'insertToc',
   'replaceTocResult',
   'rewriteTocPageNumbers',
+  'insertCaption',
+  'setCaptionNumbers',
 ] as const satisfies readonly TreeDocOpKind[];
 
 // Compile-time exhaustiveness, matching the legacy `DOC_OP_KINDS` guard: a new op must be

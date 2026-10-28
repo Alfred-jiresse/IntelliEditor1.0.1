@@ -49,6 +49,7 @@
 // derivation instead of N. When it re-derives, the previous `formatting` and `page`
 // sub-objects are reused if value-equal, so selector results stay reference-stable too.
 
+import { pageNumberingOf } from './docx-editor-numbering.ts';
 import {
   commentBodyText,
   commentInitials,
@@ -2465,6 +2466,8 @@ export function createDocxEditor(config: DocxEditorConfig): DocxEditorInstance {
           ) as unknown as EditorQueryResults[K];
         case 'tableContext':
           return tableContextOf(surface) as EditorQueryResults[K];
+        case 'pageNumbering':
+          return pageNumberingOf(surface) as EditorQueryResults[K];
         default:
           // watermark, splitCellConfig and pageContent are nullable and underived.
           return null as EditorQueryResults[K];

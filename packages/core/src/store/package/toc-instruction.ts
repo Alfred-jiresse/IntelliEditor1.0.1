@@ -10,6 +10,11 @@ export interface TocInstruction {
   /** Inclusive 1-based outline levels from `\\o "n-m"`. Defaults 1–9. */
   readonly outlineStart: number;
   readonly outlineEnd: number;
+  /**
+   * `\\c "Label"`: a table of FIGURES — the captions numbered under that `SEQ` label, not the
+   * headings. Absent for a table of contents.
+   */
+  readonly captionLabel?: string;
   readonly raw: string;
 }
 
@@ -63,12 +68,19 @@ export function parseTocInstruction(raw: string): TocInstruction | null {
   // \h as hyperlink when \o is present (Word's Insert TOC default includes both).
   if (!hyperlink && /\\o\b/i.test(trimmed)) hyperlink = true;
 
+  // A caption label is a field identifier: letters only, so it cannot smuggle a switch or a
+  // quote into anything that later reads it.
+  const caption = /\\c\s*(?:"([^"]{1,40})"|([^\s\\"]{1,40}))/i.exec(trimmed);
+  const captionLabel = caption ? (caption[1] ?? caption[2]) : undefined;
+  if (captionLabel !== undefined && !/^\p{L}{1,32}$/u.test(captionLabel)) return null;
+
   return {
     keyword: 'TOC',
     hyperlink,
     omitPageNumbers,
     outlineStart,
     outlineEnd,
+    ...(captionLabel !== undefined ? { captionLabel } : {}),
     raw: trimmed,
   };
 }

@@ -8,7 +8,7 @@
 
 import type { OoxmlNode, OoxmlPart } from '../package/ooxml-tree.ts';
 import { paragraphPropertiesNodeOf } from './tree-op-nodes.ts';
-import type { TreeDocOp } from './tree-op-types.ts';
+import type { SectionPageNumberFormat, TreeDocOp } from './tree-op-types.ts';
 
 /** The `w:body` element of a part, or null when the root holds none. */
 export function bodyNodeOf(
@@ -214,4 +214,33 @@ export function metricsOfSection(sectPr: OoxmlNode | null): SectionMetrics {
     footerTwips: clampedMargin(sectionAttribute(pgMar, 'footer'), 720),
     gutterTwips: clampedMargin(sectionAttribute(pgMar, 'gutter'), 0),
   };
+}
+
+const PAGE_NUMBER_FORMATS: ReadonlySet<SectionPageNumberFormat> = new Set([
+  'decimal',
+  'lowerRoman',
+  'upperRoman',
+  'lowerLetter',
+  'upperLetter',
+]);
+
+/** Highest page number a section may restart at — the bound the layout reader accepts. */
+export const MAX_PAGE_NUMBER_START = 9999;
+
+/** Whether the op writes `w:pgNumType` at all. */
+export function touchesPageNumbering(op: SectionWriteOp): boolean {
+  return op.pageNumberFormat !== undefined || op.pageNumberStart !== undefined;
+}
+
+/**
+ * Whether the op's page-numbering fields are writable: a format Word offers, and a start
+ * that is a whole page number in the range the layout reader honours (or `null`, continue).
+ */
+export function pageNumberingFieldsValid(op: SectionWriteOp): boolean {
+  if (op.pageNumberFormat !== undefined && !PAGE_NUMBER_FORMATS.has(op.pageNumberFormat)) {
+    return false;
+  }
+  const start = op.pageNumberStart;
+  if (start === undefined || start === null) return true;
+  return Number.isInteger(start) && start >= 0 && start <= MAX_PAGE_NUMBER_START;
 }

@@ -1221,8 +1221,9 @@ export interface PaginatedSurface {
     applyTableCommandPlan(plan: TableCommandPlan): ExecResult;
     bookmarks(): BookmarkIndex;
     canAdjustIndent(direction: 'increase' | 'decrease'): boolean;
+    canInsertCaption(label: string, position: CaptionPosition): boolean;
     canInsertTable(rows: number, cols: number): boolean;
-    canInsertToc(): boolean;
+    canInsertToc(captionLabel?: string): boolean;
     canRefreshToc(tocId?: string): boolean;
     clearFormatting(): void;
     commitReviewOps(run: () => {
@@ -1284,6 +1285,7 @@ export interface PaginatedSurface {
     readonly hyperlinks: HyperlinkOps;
     // (undocumented)
     imageDecodePort(): ImageDecodePort;
+    insertCaption(label: string, text: string, position: CaptionPosition): boolean;
     // (undocumented)
     insertImage(input: Omit<InsertImageInput, 'decodePort'>): Promise<ImageIntentResult>;
     insertLineBreak(): void;
@@ -1294,7 +1296,7 @@ export interface PaginatedSurface {
     insertSectionBreak(): boolean;
     insertTab(): void;
     insertTable(rows: number, cols: number): boolean;
-    insertToc(): boolean;
+    insertToc(captionLabel?: string): boolean;
     isInsideToc(paragraphId: string): boolean;
     isListActive(kind: 'bullet' | 'ordered'): boolean;
     isListParagraph(): boolean;
@@ -1376,6 +1378,8 @@ export interface PaginatedSurface {
         readonly marginRightTwips?: number;
         readonly marginBottomTwips?: number;
         readonly marginLeftTwips?: number;
+        readonly pageNumberFormat?: PageNumberFormat;
+        readonly pageNumberStart?: number | null;
         readonly anchorParagraphId?: string;
     }): boolean;
     setSelection(next: SemanticSelection): void;
@@ -1391,6 +1395,7 @@ export interface PaginatedSurface {
     // (undocumented)
     type(text: string): void;
     undo(): void;
+    updateCaptionNumbers(label?: string): boolean;
 }
 
 // @public

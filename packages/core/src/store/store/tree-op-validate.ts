@@ -6,6 +6,7 @@
 // Application lives in tree-op-apply.ts; public entry is tree-ops.ts.
 
 import type { OoxmlNode, OoxmlParagraphNode, OoxmlPart } from '../package/ooxml-tree.ts';
+import { validateInsertCaption, validateSetCaptionNumbers } from './tree-op-captions.ts';
 import { findNode } from '../package/ooxml-edit.ts';
 import { isValidXmlText } from '../package/sinks.ts';
 import { isAuthorableDataBinding } from '../package/custom-node-payloads.ts';
@@ -46,9 +47,11 @@ import {
   bodyNodeOf,
   isTableNested,
   metricsOfSection,
+  pageNumberingFieldsValid,
   plannedSectionDimensions,
   sectionChild,
   targetSectionNodes,
+  touchesPageNumbering,
 } from './tree-op-section-address.ts';
 import { rangePartiallyOverlapsDrawingAtom } from '../package/drawing-projection.ts';
 import { isDrawingTreeDocOp, validateDrawingOp } from './tree-op-drawings.ts';
@@ -563,6 +566,8 @@ export function validateTreeOp(part: OoxmlPart, op: TreeDocOp): TreeOpRejection 
     return validateInsertTable(part, op);
   }
 
+  if (op.op === 'insertCaption') return validateInsertCaption(part, op);
+  if (op.op === 'setCaptionNumbers') return validateSetCaptionNumbers(part, op);
   if (op.op === 'insertToc') {
     return validateInsertToc(part, op);
   }
@@ -584,10 +589,12 @@ export function validateTreeOp(part: OoxmlPart, op: TreeDocOp): TreeOpRejection 
     if (
       dims.every((value) => value === undefined) &&
       margins.every((value) => value === undefined) &&
-      op.orientation === undefined
+      op.orientation === undefined &&
+      !touchesPageNumbering(op)
     ) {
       return 'invalid-property-value';
     }
+    if (!pageNumberingFieldsValid(op)) return 'invalid-property-value';
     for (const value of dims) {
       // The same bound the read side clamps to: a page dimension is a pagination loop
       // bound, so the write path must not admit what the read path would refuse.

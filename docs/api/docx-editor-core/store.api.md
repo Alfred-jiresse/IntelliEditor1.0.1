@@ -172,6 +172,9 @@ export interface AuthorizationPort {
 export function beginOperation(init: OperationInit): OperationContext;
 
 // @public
+export function bodyBlockOfParagraph(part: OoxmlPart, paragraphId: string): string | null;
+
+// @public
 export function bodyStoryRoot(part: OoxmlPart): OoxmlNode | null;
 
 // @public
@@ -317,6 +320,25 @@ export interface CapabilityId {
 }
 
 // @public
+export const CAPTION_MAX_UPDATES = 2048;
+
+// @public
+export const CAPTION_TEXT_MAX = 200;
+
+// @public
+export function captionInstruction(label: string): string;
+
+// @public
+export interface CaptionNumberUpdate {
+    // (undocumented)
+    readonly chapterPrefix: string | null;
+    // (undocumented)
+    readonly number: string;
+    // (undocumented)
+    readonly paragraphId: string;
+}
+
+// @public
 export function cascadeDeletedNoteReferences(before: OoxmlPackage, after: OoxmlPackage, options?: CascadeDeletedNoteReferencesOptions): OoxmlPackage | null;
 
 // @public
@@ -341,6 +363,9 @@ export interface ClockPort {
     // (undocumented)
     now(): number;
 }
+
+// @public
+export function collectCaptionEntries(part: OoxmlPart, label: string): readonly TocOutlineHeading[];
 
 // @public
 export function collectFlowBlocks(children: readonly OoxmlNode[], depth?: number, accept?: (block: OoxmlElement) => boolean): OoxmlElement[];
@@ -1087,6 +1112,9 @@ export function directParagraphMarkProperties(part: OoxmlPart, paragraphId: stri
 export function directParagraphProperties(part: OoxmlPart, paragraphId: string): readonly OoxmlProperty[];
 
 // @public
+export function displayedParagraphText(paragraph: OoxmlNode): string;
+
+// @public
 export interface DocumentTrackingSettings {
     readonly doNotTrackFormatting: boolean;
     readonly doNotTrackMoves: boolean;
@@ -1701,6 +1729,12 @@ export function instrTextValue(node: OoxmlNode): string;
 
 // @public
 export function isAuthorableRunProperty(localName: string): boolean;
+
+// @public
+export function isCaptionLabel(label: unknown): label is string;
+
+// @public
+export function isCaptionText(text: unknown): text is string;
 
 // @public
 export function isContentControl(node: OoxmlNode): node is ContentControlLike;
@@ -2927,6 +2961,9 @@ export function parseNoteScopeId(id: string): {
 export function parseSemVer(input: string): SemVer;
 
 // @public
+export function parseSeqInstruction(raw: string): SeqInstruction | null;
+
+// @public
 export function parseTocInstruction(raw: string): TocInstruction | null;
 
 // @public
@@ -2936,6 +2973,28 @@ export function partNameKey(partName: string): string;
 export interface PersistencePort {
     // (undocumented)
     readonly kind: 'persistence';
+}
+
+// @public
+export function planCaptionNumbers(part: OoxmlPart, chapterHeadingIds: ReadonlySet<string>, options?: {
+    readonly label?: string;
+    readonly insertion?: PlannedCaptionInsertion;
+}): {
+    readonly inserted: {
+        readonly chapterPrefix: string;
+        readonly number: string;
+    } | null;
+    readonly updates: readonly CaptionNumberUpdate[];
+};
+
+// @public
+export interface PlannedCaptionInsertion {
+    // (undocumented)
+    readonly anchorBlockId: string;
+    // (undocumented)
+    readonly label: string;
+    // (undocumented)
+    readonly position: 'above' | 'below';
 }
 
 // @public
@@ -3509,6 +3568,14 @@ export interface SemVer {
 }
 
 // @public
+export interface SeqInstruction {
+    readonly arabic: boolean;
+    // (undocumented)
+    readonly identifier: string;
+    readonly restartsAtChapter: boolean;
+}
+
+// @public
 export class SequentialIdentity implements IdentityPort {
     constructor(prefix?: string);
     // (undocumented)
@@ -3706,10 +3773,14 @@ export interface TocEntryPlan {
 }
 
 // @public
+export function tocEntryStyleId(instruction: TocInstruction, level: number): string;
+
+// @public
 export function tocEntryText(text: string): string;
 
 // @public
 export interface TocInstruction {
+    readonly captionLabel?: string;
     readonly hyperlink: boolean;
     // (undocumented)
     readonly keyword: 'TOC';
@@ -3744,7 +3815,7 @@ export interface TransportPort {
 }
 
 // @public
-export const TREE_DOC_OP_KINDS: readonly ["insertText", "deleteText", "setParagraphMarkRevision", "proposeParagraphMerge", "insertCommentMarker", "acceptRevision", "rejectRevision", "acceptAllRevisions", "rejectAllRevisions", "insertTab", "insertHardBreak", "insertPageBreak", "insertPageField", "setListLevel", "setListNumbering", "setParagraphMarkProperties", "splitParagraph", "splitParagraphMany", "joinParagraphs", "setRunProperties", "setParagraphProperties", "setSectionProperties", "setSectionMark", "insertHyperlink", "setHyperlinkTarget", "removeHyperlink", "setContentControlValue", "removeContentControl", "insertInlineContentControl", "addRepeatingSectionItem", "removeRepeatingSectionItem", "deleteBlock", "insertTable", "insertTableRow", "deleteTableRow", "insertTableColumn", "deleteTableColumn", "setTableColumnWidths", "setTableRightEdgeWidth", "setTableRowHeight", "setTableCellBorders", "setTableCellFill", "setTableCellVerticalAlignment", "createHeaderFooter", "deleteHeaderFooter", "linkToPrevious", "unlinkFromPrevious", "setSectionFurnitureOptions", "insertNote", "deleteNote", "convertNote", "convertAllNotes", "setNoteProperties", "setContentControlProperties", "insertContentControl", "insertDrawing", "replaceDrawingResource", "deleteDrawing", "resizeDrawing", "cropDrawing", "positionDrawing", "setDrawingWrap", "setDrawingMetadata", "setDrawingLocks", "transformDrawing", "insertToc", "replaceTocResult", "rewriteTocPageNumbers"];
+export const TREE_DOC_OP_KINDS: readonly ["insertText", "deleteText", "setParagraphMarkRevision", "proposeParagraphMerge", "insertCommentMarker", "acceptRevision", "rejectRevision", "acceptAllRevisions", "rejectAllRevisions", "insertTab", "insertHardBreak", "insertPageBreak", "insertPageField", "setListLevel", "setListNumbering", "setParagraphMarkProperties", "splitParagraph", "splitParagraphMany", "joinParagraphs", "setRunProperties", "setParagraphProperties", "setSectionProperties", "setSectionMark", "insertHyperlink", "setHyperlinkTarget", "removeHyperlink", "setContentControlValue", "removeContentControl", "insertInlineContentControl", "addRepeatingSectionItem", "removeRepeatingSectionItem", "deleteBlock", "insertTable", "insertTableRow", "deleteTableRow", "insertTableColumn", "deleteTableColumn", "setTableColumnWidths", "setTableRightEdgeWidth", "setTableRowHeight", "setTableCellBorders", "setTableCellFill", "setTableCellVerticalAlignment", "createHeaderFooter", "deleteHeaderFooter", "linkToPrevious", "unlinkFromPrevious", "setSectionFurnitureOptions", "insertNote", "deleteNote", "convertNote", "convertAllNotes", "setNoteProperties", "setContentControlProperties", "insertContentControl", "insertDrawing", "replaceDrawingResource", "deleteDrawing", "resizeDrawing", "cropDrawing", "positionDrawing", "setDrawingWrap", "setDrawingMetadata", "setDrawingLocks", "transformDrawing", "insertToc", "replaceTocResult", "rewriteTocPageNumbers", "insertCaption", "setCaptionNumbers"];
 
 // @public
 export type TreeDocOp = {
@@ -3866,6 +3937,8 @@ export type TreeDocOp = {
     readonly marginRightTwips?: number;
     readonly marginBottomTwips?: number;
     readonly marginLeftTwips?: number;
+    readonly pageNumberFormat?: SectionPageNumberFormat;
+    readonly pageNumberStart?: number | null;
     readonly anchorParagraphId?: string;
 } | {
     readonly op: 'setSectionMark';
@@ -4134,6 +4207,22 @@ export type TreeDocOp = {
     readonly updates: readonly {
         readonly paragraphId: string;
         readonly pageNumberText: string;
+    }[];
+} | {
+    readonly op: 'insertCaption';
+    readonly anchorBlockId: string;
+    readonly position: 'above' | 'below';
+    readonly label: string;
+    readonly text: string;
+    readonly chapterPrefix: string;
+    readonly number: string;
+    readonly styleId?: string;
+} | {
+    readonly op: 'setCaptionNumbers';
+    readonly updates: readonly {
+        readonly paragraphId: string;
+        readonly chapterPrefix: string | null;
+        readonly number: string;
     }[];
 };
 

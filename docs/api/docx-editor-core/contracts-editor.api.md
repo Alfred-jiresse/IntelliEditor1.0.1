@@ -29,6 +29,9 @@ export type CanResult = {
 };
 
 // @public
+export type CaptionPosition = 'above' | 'below';
+
+// @public
 export type ColorValue = {
     readonly kind: 'hex';
     readonly value: string;
@@ -618,7 +621,7 @@ export type EditorCommand = {
 }[keyof EditorCommands];
 
 // @public
-export interface EditorCommands extends EditorCommandShape<DocEdits>, EditorHeaderFooterCommands, EditorNoteCommands {
+export interface EditorCommands extends EditorCommandShape<DocEdits>, EditorHeaderFooterCommands, EditorNoteCommands, EditorNumberingCommands {
     clearFormatting: Record<never, never>;
     commitTableColumnDividerResize: {
         target: TableColumnDividerResizeTarget;
@@ -666,7 +669,9 @@ export interface EditorCommands extends EditorCommandShape<DocEdits>, EditorHead
         where: 'above' | 'below';
         target?: TableRowOccurrenceTarget;
     };
-    insertToc: Record<never, never>;
+    insertToc: {
+        captionLabel?: string;
+    };
     // (undocumented)
     mergeCells: Record<never, never>;
     paste: {
@@ -935,6 +940,23 @@ export interface EditorNoteCommands {
 }
 
 // @public
+export interface EditorNumberingCommands {
+    insertCaption: {
+        label: string;
+        text?: string;
+        position?: CaptionPosition;
+    };
+    setPageNumbering: {
+        format?: PageNumberFormat;
+        start?: number | null;
+        scope?: 'document' | 'section';
+    };
+    updateCaptionNumbers: {
+        label?: string;
+    };
+}
+
+// @public
 export type EditorPosition = DocAnchor | SemanticPosition;
 
 // @public
@@ -952,6 +974,7 @@ export interface EditorQueries extends DocQueries {
     isInsideToc: {
         pos: number;
     };
+    pageNumbering: Record<never, never>;
     // (undocumented)
     selectedText: Record<never, never>;
     // (undocumented)
@@ -983,6 +1006,8 @@ export interface EditorQueryResults extends DocQueryResults {
     hyperlinkAt: HyperlinkInfo | null;
     // (undocumented)
     isInsideToc: boolean;
+    // (undocumented)
+    pageNumbering: PageNumbering | null;
     // (undocumented)
     selectedText: string;
     // (undocumented)
@@ -1324,6 +1349,16 @@ export interface PageMargins {
     readonly rightTwips: number;
     // (undocumented)
     readonly topTwips: number;
+}
+
+// @public
+export type PageNumberFormat = 'decimal' | 'lowerRoman' | 'upperRoman' | 'lowerLetter' | 'upperLetter';
+
+// @public
+export interface PageNumbering {
+    // (undocumented)
+    readonly format: PageNumberFormat;
+    readonly start: number | null;
 }
 
 // @public

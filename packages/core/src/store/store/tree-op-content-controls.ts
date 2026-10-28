@@ -433,6 +433,10 @@ const TREE_OP_REACH: {
   }),
   // Page numbers rewrite runs in the result paragraphs the op names, and nothing else.
   rewriteTocPageNumbers: (op) => ({ kind: 'nodes', targets: inParagraphs(op.updates) }),
+  // A caption is a new paragraph BESIDE a body block, like a table insert; renumbering
+  // rewrites runs in exactly the captions it names.
+  insertCaption: (op) => ({ kind: 'nodes', targets: [{ nodeId: op.anchorBlockId }] }),
+  setCaptionNumbers: (op) => ({ kind: 'nodes', targets: inParagraphs(op.updates) }),
   // Page setup, section furniture and note numbering are properties OF the document. They change
   // no content, so no control's lock speaks to them; forms protection still does.
   setSectionProperties: () => ({ kind: 'documentProperties' }),

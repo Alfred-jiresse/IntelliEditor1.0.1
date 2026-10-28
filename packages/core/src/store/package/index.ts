@@ -272,12 +272,28 @@ export {
   buildTocEntryParagraph,
   planTocEntries,
   TOC_LEVEL_INDENT_TWIPS,
+  tocEntryStyleId,
   tocEntryText,
   tocLeftIndentTwips,
   type TocEntryPlan,
   type TocOutlineHeading,
 } from './toc-build.ts';
 export { resolveTocRowHeadings } from './toc-rows.ts';
+export {
+  CAPTION_MAX_UPDATES,
+  CAPTION_TEXT_MAX,
+  bodyBlockOfParagraph,
+  captionInstruction,
+  collectCaptionEntries,
+  displayedParagraphText,
+  isCaptionLabel,
+  isCaptionText,
+  parseSeqInstruction,
+  planCaptionNumbers,
+  type CaptionNumberUpdate,
+  type PlannedCaptionInsertion,
+  type SeqInstruction,
+} from './caption-fields.ts';
 export {
   deriveOoxmlIndexes,
   indexStyles,

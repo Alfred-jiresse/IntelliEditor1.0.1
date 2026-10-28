@@ -4,6 +4,7 @@
 // the formatting snapshot and the surface interface itself. The composition root in
 // paginated-surface.ts implements and re-exports them, so importers keep one entry point.
 
+import type { CaptionPosition, PageNumberFormat } from '../contracts/editor-numbering.ts';
 import type { IndentFormatting } from '../contracts/types.ts';
 import type { TreeApplyResult, TreeDocxSession } from '@docx-editor.dev/core/binding';
 import type { BookmarkIndex, StoryScope, TreeDocOp } from '@docx-editor.dev/core/store';
@@ -577,6 +578,8 @@ export interface PaginatedSurface {
     readonly marginRightTwips?: number;
     readonly marginBottomTwips?: number;
     readonly marginLeftTwips?: number;
+    readonly pageNumberFormat?: PageNumberFormat;
+    readonly pageNumberStart?: number | null;
     readonly anchorParagraphId?: string;
   }): boolean;
   /**
@@ -617,10 +620,22 @@ export interface PaginatedSurface {
   insertTable(rows: number, cols: number): boolean;
   /** Whether the addressed (or caret-local) body TOC can be refreshed. */
   canRefreshToc(tocId?: string): boolean;
-  /** Whether a generated body TOC can be inserted before the caret paragraph. */
-  canInsertToc(): boolean;
-  /** Insert and populate a generated body TOC before the caret paragraph. */
-  insertToc(): boolean;
+  /**
+   * Whether a generated body TOC can be inserted before the caret paragraph — with
+   * `captionLabel`, a list of that label's captions (a list of figures or tables).
+   */
+  canInsertToc(captionLabel?: string): boolean;
+  /** Insert and populate a generated body TOC (or caption list) before the caret paragraph. */
+  insertToc(captionLabel?: string): boolean;
+  /** Whether a caption of `label` can be inserted above/below the caret's body block. */
+  canInsertCaption(label: string, position: CaptionPosition): boolean;
+  /**
+   * Insert a numbered caption above/below the caret's body block, renumbering the label's
+   * other captions in the same undo step. The caret lands at the end of the caption.
+   */
+  insertCaption(label: string, text: string, position: CaptionPosition): boolean;
+  /** Renumber the captions of `label` (every label when omitted). True when nothing failed. */
+  updateCaptionNumbers(label?: string): boolean;
   /** Refresh cached TOC entries and/or page numbers through the two-pass layout pipeline. */
   refreshToc(tocId?: string, mode?: 'entire' | 'pageNumbers'): boolean;
   /** Whether a body paragraph belongs to a detected TOC boundary or cached result. */

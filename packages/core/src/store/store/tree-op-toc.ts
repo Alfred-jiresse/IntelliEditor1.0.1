@@ -5,6 +5,7 @@ import {
   bookmarkPairNodes,
   buildTocContentControl,
   buildTocEntryParagraph,
+  tocEntryStyleId,
   type TocEntryPlan,
 } from '../package/toc-build.ts';
 import { parseTocInstruction, TOC_MAX_ENTRIES } from '../package/toc-instruction.ts';
@@ -236,13 +237,16 @@ function replaceResultParagraphs(
     );
     if (style?.kind === 'textValue') continue;
     const styleId = style?.attributes.find((attribute) => attribute.localName === 'val')?.value;
-    if (styleId?.startsWith('TOC') && !propertiesByStyle.has(styleId)) {
+    if (
+      (styleId?.startsWith('TOC') || styleId === 'TableofFigures') &&
+      !propertiesByStyle.has(styleId)
+    ) {
       propertiesByStyle.set(styleId, properties);
     }
   }
   const mint = createNodeIdAllocator(part);
   const newEntries = entries.map((entry) => {
-    const styleId = `TOC${Math.min(entry.level + 1, 9)}`;
+    const styleId = tocEntryStyleId(toc.instruction, entry.level);
     return buildTocEntryParagraph(mint, entry, toc.instruction, propertiesByStyle.get(styleId));
   });
   const nextChildren = [

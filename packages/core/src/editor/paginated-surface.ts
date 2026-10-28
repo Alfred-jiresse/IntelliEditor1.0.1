@@ -7,9 +7,11 @@ import { openTreeSession, type TreeDocxSession } from '@docx-editor.dev/core/bin
 import {
   TOC_MAX_PAGE_PASSES,
   deepParagraphOrderOfPart,
+  collectCaptionEntries,
   detectBodyTocs,
   findNode,
   hyperlinkTargetOf,
+  isCaptionLabel,
   inlineControlEndingAt,
   inlineControlStartingAt,
   isContentControl,
@@ -22,8 +24,11 @@ import {
   type OoxmlElement,
   type OoxmlNode,
   type StoryScope,
+  type TocInstruction,
+  type TocOutlineHeading,
   type TreeDocOp,
 } from '@docx-editor.dev/core/store';
+import { createSurfaceCaptions } from './surface-captions.ts';
 import { syncActiveFieldShading } from './surface-field-shading.ts';
 import {
   createLayoutScheduler,
@@ -688,6 +693,18 @@ export function mountPaginatedSurface(
         level
       ) !== null,
   });
+  const captions = createSurfaceCaptions({
+    session: gatedSession,
+    storyScope,
+    caretParagraphId: () => selection.head.paragraphId,
+    commit: (run, nextSelection) => commit(run, nextSelection),
+    selectionMark: () => selectionMark(),
+    collapsedAt: (position) => collapsedAt(position),
+    paragraphTextOf: (paragraphId) => textOf(paragraphId),
+    reject: (reason) => {
+      lastRejection = reason;
+    },
+  });
   const hyperlinks = createHyperlinkOps({
     session: gatedSession,
     // Asked BEFORE the relationship is minted. The gated session refuses the ops in viewing mode
@@ -1334,7 +1351,7 @@ export function mountPaginatedSurface(
     const headings = resolveTocRowHeadings(
       session.part(),
       toc,
-      session.documentOutline(),
+      tocSourceOf(toc.instruction),
       tocRegionOf(toc)
     );
     const headingParagraphId = headings[toc.resultParagraphIds.indexOf(paragraphId)];
@@ -2788,39 +2805,49 @@ export function mountPaginatedSurface(
 
   const INSERT_TOC_INSTRUCTION = 'TOC \\o "1-3" \\h';
 
-  function insertTocOp() {
-    const instruction = parseTocInstruction(INSERT_TOC_INSTRUCTION);
+  /** What a table's rows come from: the headings, or the captions its `\\c` label names. */
+  function tocSourceOf(instruction: TocInstruction): readonly TocOutlineHeading[] {
+    return instruction.captionLabel !== undefined
+      ? collectCaptionEntries(session.part(), instruction.captionLabel)
+      : session.documentOutline();
+  }
+
+  function insertTocOp(captionLabel?: string) {
+    if (captionLabel !== undefined && !isCaptionLabel(captionLabel)) return null;
+    const raw =
+      captionLabel === undefined ? INSERT_TOC_INSTRUCTION : `TOC \\h \\z \\c "${captionLabel}"`;
+    const instruction = parseTocInstruction(raw);
     if (!instruction) return null;
-    const outline = session.documentOutline();
+    const source = tocSourceOf(instruction);
     const plan = planTocEntries(
       session.part(),
-      outline,
+      source,
       instruction,
       pageNumbersFor(
         surface.layout(),
-        outline.map((entry) => entry.blockId)
+        source.map((entry) => entry.blockId)
       ),
       tocParagraphIds()
     );
     return {
       op: 'insertToc' as const,
       beforeParagraphId: selection.head.paragraphId,
-      instruction: INSERT_TOC_INSTRUCTION,
-      alias: options.tocLabels?.title ?? 'TOC',
+      instruction: raw,
+      alias: captionLabel ?? options.tocLabels?.title ?? 'TOC',
       entries: plan.entries,
       bookmarksToCreate: plan.bookmarksToCreate,
     };
   }
 
-  function canInsertToc(): boolean {
+  function canInsertToc(captionLabel?: string): boolean {
     if (editingMode === 'view' || !session.editable || selectionTouchesToc()) return false;
-    const op = insertTocOp();
+    const op = insertTocOp(captionLabel);
     return op !== null && validateTreeOp(session.part(), op) === null;
   }
 
-  function insertToc(): boolean {
-    if (!canInsertToc()) return false;
-    const op = insertTocOp();
+  function insertToc(captionLabel?: string): boolean {
+    if (!canInsertToc(captionLabel)) return false;
+    const op = insertTocOp(captionLabel);
     if (!op) return false;
     const existing = new Set(detectBodyTocs(session.part()).map((toc) => toc.id));
     const inserted = session.applyTreeOps([op]);
@@ -2837,7 +2864,7 @@ export function mountPaginatedSurface(
     if (!toc || !canRefreshToc(toc.id)) return false;
 
     let layout = surface.layout();
-    const outline = session.documentOutline();
+    const outline = tocSourceOf(toc.instruction);
     const outlineBlockIds = outline.map((entry) => entry.blockId);
 
     if (mode === 'entire') {
@@ -3393,6 +3420,9 @@ export function mountPaginatedSurface(
     insertToc,
     canRefreshToc,
     refreshToc,
+    canInsertCaption: captions.canInsertCaption,
+    insertCaption: captions.insertCaption,
+    updateCaptionNumbers: captions.updateCaptionNumbers,
     isInsideToc: (paragraphId) =>
       detectBodyTocs(session.part()).some(
         (toc) =>

@@ -28,6 +28,7 @@ import {
 } from './docx-editor-notes.ts';
 import { isTableEditorCommand, planTableCommand } from './table-command-plan.ts';
 import { execImageCommand, isImageCommand } from './docx-editor-images.ts';
+import { execNumberingCommand, isNumberingCommand } from './docx-editor-numbering.ts';
 
 /**
  * Run one admitted command against the surface.
@@ -258,7 +259,7 @@ export function execEditorCommand(
       }
       break;
     case 'insertToc':
-      if (!mounted.insertToc()) {
+      if (!mounted.insertToc(command.captionLabel)) {
         return {
           ok: false,
           code: 'unsupported',
@@ -388,6 +389,7 @@ export function execEditorCommand(
       return { ok: true, changed: false };
     }
     default:
+      if (isNumberingCommand(command)) return execNumberingCommand(mounted, command);
       if (isImageCommand(command)) {
         return execImageCommand(mounted, command, options?.editor);
       }

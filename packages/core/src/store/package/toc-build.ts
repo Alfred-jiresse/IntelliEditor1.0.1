@@ -245,6 +245,14 @@ function withFreshIds(node: OoxmlNode, mint: () => string): OoxmlNode {
   } as OoxmlNode;
 }
 
+/**
+ * The paragraph style of one generated row: `TOC1`…`TOC9` by level, or Word's `TableofFigures`
+ * for every row of a list of figures or tables.
+ */
+export function tocEntryStyleId(instruction: TocInstruction, level: number): string {
+  return instruction.captionLabel !== undefined ? 'TableofFigures' : `TOC${Math.min(level + 1, 9)}`;
+}
+
 /** Build one TOC entry paragraph node. */
 export function buildTocEntryParagraph(
   mint: () => string,
@@ -252,7 +260,7 @@ export function buildTocEntryParagraph(
   instruction: TocInstruction,
   paragraphPropertiesTemplate?: OoxmlNode
 ): OoxmlNode {
-  const styleId = `TOC${Math.min(entry.level + 1, 9)}`;
+  const styleId = tocEntryStyleId(instruction, entry.level);
   const runs: OoxmlNode[] = [runWithText(mint, entry.text)];
   if (!instruction.omitPageNumbers) {
     runs.push(ptabRun(mint));
@@ -305,6 +313,54 @@ export function buildTocContentControl(
     ]),
   ]);
   const end = paragraphWithChildren(mint, [runWithChildren(mint, [fieldChar(mint, 'end')])]);
+  const aliasNode = {
+    id: mint(),
+    kind: 'generic',
+    namespaceUri: WML_NAMESPACE_URI,
+    localName: 'alias',
+    prefix: 'w',
+    namespaceBindings: [],
+    attributes: [wAttr('val', alias)],
+    children: [],
+  } as unknown as OoxmlNode;
+  // Word marks only the table of CONTENTS as a gallery part; a list of figures is a plain
+  // field inside its control, and claiming the gallery would make Word treat it as the TOC.
+  const galleryNodes: OoxmlNode[] =
+    instruction.captionLabel !== undefined
+      ? []
+      : [
+          {
+            id: mint(),
+            kind: 'generic',
+            namespaceUri: WML_NAMESPACE_URI,
+            localName: 'docPartObj',
+            prefix: 'w',
+            namespaceBindings: [],
+            attributes: [],
+            children: [
+              {
+                id: mint(),
+                kind: 'generic',
+                namespaceUri: WML_NAMESPACE_URI,
+                localName: 'docPartGallery',
+                prefix: 'w',
+                namespaceBindings: [],
+                attributes: [wAttr('val', 'Table of Contents')],
+                children: [],
+              } as unknown as OoxmlNode,
+              {
+                id: mint(),
+                kind: 'generic',
+                namespaceUri: WML_NAMESPACE_URI,
+                localName: 'docPartUnique',
+                prefix: 'w',
+                namespaceBindings: [],
+                attributes: [],
+                children: [],
+              } as unknown as OoxmlNode,
+            ],
+          } as unknown as OoxmlNode,
+        ];
   const properties: OoxmlNode = {
     id: mint(),
     kind: 'contentControlProperties',
@@ -313,49 +369,7 @@ export function buildTocContentControl(
     prefix: 'w',
     namespaceBindings: [],
     attributes: [],
-    children: [
-      {
-        id: mint(),
-        kind: 'generic',
-        namespaceUri: WML_NAMESPACE_URI,
-        localName: 'alias',
-        prefix: 'w',
-        namespaceBindings: [],
-        attributes: [wAttr('val', alias)],
-        children: [],
-      } as unknown as OoxmlNode,
-      {
-        id: mint(),
-        kind: 'generic',
-        namespaceUri: WML_NAMESPACE_URI,
-        localName: 'docPartObj',
-        prefix: 'w',
-        namespaceBindings: [],
-        attributes: [],
-        children: [
-          {
-            id: mint(),
-            kind: 'generic',
-            namespaceUri: WML_NAMESPACE_URI,
-            localName: 'docPartGallery',
-            prefix: 'w',
-            namespaceBindings: [],
-            attributes: [wAttr('val', 'Table of Contents')],
-            children: [],
-          } as unknown as OoxmlNode,
-          {
-            id: mint(),
-            kind: 'generic',
-            namespaceUri: WML_NAMESPACE_URI,
-            localName: 'docPartUnique',
-            prefix: 'w',
-            namespaceBindings: [],
-            attributes: [],
-            children: [],
-          } as unknown as OoxmlNode,
-        ],
-      } as unknown as OoxmlNode,
-    ],
+    children: [aliasNode, ...galleryNodes],
   } as unknown as OoxmlNode;
   const content: OoxmlNode = {
     id: mint(),

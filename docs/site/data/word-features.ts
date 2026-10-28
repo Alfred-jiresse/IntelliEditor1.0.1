@@ -720,12 +720,12 @@ export const wordFeatures: WordFeature[] = [
     id: 'layout.page-num-format',
     name: 'Page number format (pgNumType)',
     category: 'layout',
-    editing: 'none',
+    editing: 'partial',
     rendering: 'partial',
     roundTrip: 'full',
     tier: 'community',
     notes:
-      'Section numbering start, format, chapter style, and chapter separator parse and serialize. Allowlisted PAGE fields in headers/footers honour authored start and fmt (e.g. lowerRoman); NUMPAGES/SECTIONPAGES stay decimal. There is no pgNumType authoring UI yet.',
+      'Section numbering start, format, chapter style, and chapter separator parse and serialize. Allowlisted PAGE fields in headers/footers honour authored start and fmt (e.g. lowerRoman); NUMPAGES/SECTIONPAGES stay decimal. The setPageNumbering command sets the page number format of a section (1, i, I, a, A) and restart or continue, keeping the authored chapter attributes; the packaged chrome has no dialog for it yet.',
   },
 
   // --- Review ---------------------------------------------------------------
@@ -832,7 +832,18 @@ export const wordFeatures: WordFeature[] = [
     roundTrip: 'full',
     tier: 'community',
     notes:
-      'Body TOCs can be inserted from the shared Insert menu and refreshed from document headings, including page-numbers-only updates, tab leaders, section-formatted page numbers, and bookmark links. Generated rows are read-only navigation links.',
+      "Body TOCs can be inserted from the shared Insert menu and refreshed from document headings, including page-numbers-only updates, tab leaders, section-formatted page numbers, and bookmark links. Generated rows are read-only navigation links. A TOC with a \\c switch is a list of figures or tables: insertToc with a caption label creates one, and refreshing it lists that label's captions rather than the headings.",
+  },
+  {
+    id: 'fields.captions',
+    name: 'Captions (SEQ fields)',
+    category: 'fields',
+    editing: 'partial',
+    rendering: 'full',
+    roundTrip: 'full',
+    tier: 'community',
+    notes:
+      "The insertCaption command adds a Caption-style paragraph above or below a block (a whole table from inside a cell), numbered by chapter with a SEQ field that restarts at each Heading 1, and renumbers the label's other captions in the same undo step; updateCaptionNumbers repairs numbers after edits. Other number formats than arabic are preserved, not rewritten. The packaged chrome has no caption dialog yet.",
   },
   {
     id: 'fields.other-codes',

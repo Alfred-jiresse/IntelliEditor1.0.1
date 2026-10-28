@@ -5,6 +5,8 @@
 // source normalization, and the value-equality rules the cached snapshot uses to keep
 // sub-object references stable across re-derivations.
 
+import { isCaptionLabel } from '@docx-editor.dev/core/store';
+import { classifyNumberingCommand } from './docx-editor-numbering.ts';
 import type {
   DocAnchor,
   DocRange,
@@ -475,7 +477,13 @@ export function classifyCommand(command: EditorCommand): CommandSupport {
             reason: `insertTable needs whole rows and cols of at least 1, at most ${MAX_INSERT_TABLE_ROWS}×${MAX_INSERT_TABLE_COLUMNS}, and at most ${MAX_INSERT_TABLE_CELLS} cells`,
           };
     case 'insertToc':
-      return { supported: true, mutating: true };
+      return command.captionLabel === undefined || isCaptionLabel(command.captionLabel)
+        ? { supported: true, mutating: true }
+        : {
+            supported: false,
+            code: 'invalidArgs',
+            reason: 'insertToc captionLabel is 1–32 letters, like Figure or Tableau',
+          };
     case 'refreshToc':
       if (
         command.mode !== undefined &&
@@ -686,6 +694,10 @@ export function classifyCommand(command: EditorCommand): CommandSupport {
       return { supported: true, mutating: true };
     case 'setImageProperties':
       return { supported: true, mutating: true };
+    case 'setPageNumbering':
+    case 'insertCaption':
+    case 'updateCaptionNumbers':
+      return classifyNumberingCommand(command);
     default:
       return {
         supported: false,

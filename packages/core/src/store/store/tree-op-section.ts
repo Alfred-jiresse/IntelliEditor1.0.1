@@ -28,6 +28,7 @@ import {
   sectionAttribute,
   sectionChild,
   targetSectionNodes,
+  touchesPageNumbering,
 } from './tree-op-section-address.ts';
 import type { OoxmlProperty, TreeDocOp, TreeOpEffect, TreeOpResult } from './tree-op-types.ts';
 import {
@@ -445,6 +446,7 @@ function mergedSectionChildren(
   }
 
   let children = [...childrenOf(sectPr)];
+  if (touchesPageNumbering(op)) children = withPageNumbering(children, op, nextId);
   if (nextPgSz) {
     if (existingPgSz) {
       children = children.map((child) => (child.id === existingPgSz.id ? nextPgSz : child));
@@ -460,6 +462,50 @@ function mergedSectionChildren(
     }
   }
   return children;
+}
+
+/**
+ * A section's children with `w:pgNumType` rewritten from the op's numbering fields.
+ *
+ * Surgical like the margins: only `fmt` and `start` are the op's to say, so `chapStyle`,
+ * `chapSep` and any unknown attribute keep their authored bytes. An element left with
+ * nothing to say is removed rather than written empty — "continue, decimal" is Word's
+ * default, and an absent element is how Word itself spells it.
+ */
+function withPageNumbering(
+  children: readonly OoxmlNode[],
+  op: SetSectionPropertiesOp,
+  nextId: () => string
+): OoxmlNode[] {
+  const existing = children.find(
+    (child) => child.kind !== 'textValue' && 'localName' in child && child.localName === 'pgNumType'
+  );
+  const written = new Set<string>();
+  const attributes: ReturnType<typeof wmlAttribute>[] = [];
+  if (op.pageNumberFormat !== undefined) {
+    written.add('fmt');
+    // `decimal` is the schema default: stating it is harmless, but leaving it out keeps a
+    // "continue, decimal" section free of an element Word would not have written.
+    if (op.pageNumberFormat !== 'decimal')
+      attributes.push(wmlAttribute('fmt', op.pageNumberFormat));
+  }
+  if (op.pageNumberStart !== undefined) {
+    written.add('start');
+    if (op.pageNumberStart !== null) {
+      attributes.push(wmlAttribute('start', String(op.pageNumberStart)));
+    }
+  }
+  const kept = attributesOf(existing ?? null).filter((entry) => !written.has(entry.localName));
+  const merged = [...attributes, ...kept];
+  const keptChildren = childrenOf(existing ?? null);
+  if (merged.length === 0 && keptChildren.length === 0) {
+    return existing ? children.filter((child) => child !== existing) : [...children];
+  }
+  const next = sectionElement(existing?.id ?? nextId(), 'pgNumType', merged, keptChildren);
+  if (existing) return children.map((child) => (child === existing ? next : child));
+  const result = [...children];
+  result.splice(sectionInsertIndex(result, 'pgNumType'), 0, next);
+  return result;
 }
 
 /**

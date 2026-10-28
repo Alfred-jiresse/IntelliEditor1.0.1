@@ -20,6 +20,7 @@ import type { ContainerRef } from '../contracts/types.ts';
 import type { ParagraphSummary } from '../contracts/document.ts';
 import { classifyCommand } from './docx-editor-support.ts';
 import { gateImageCommand } from './docx-editor-images.ts';
+import { gateNumberingCommand, isNumberingCommand } from './docx-editor-numbering.ts';
 
 /** Whether a command may run, and the engine's own refusal when it may not. */
 export type CommandGate =
@@ -363,7 +364,7 @@ export function gateCommand(
       },
     };
   }
-  if (command.type === 'insertToc' && !surface.canInsertToc()) {
+  if (command.type === 'insertToc' && !surface.canInsertToc(command.captionLabel)) {
     return {
       ok: false,
       refusal: {
@@ -428,6 +429,8 @@ export function gateCommand(
     if (!tableGate.ok) return tableGate;
     return { ok: true, tablePlan: tableGate.tablePlan };
   }
+  const numberingGate = isNumberingCommand(command) ? gateNumberingCommand(command, surface) : null;
+  if (numberingGate && !numberingGate.ok) return { ok: false, refusal: numberingGate };
   const imageGate = gateImageCommand(command, surface);
   if (imageGate && !imageGate.ok) {
     return { ok: false, refusal: imageGate };

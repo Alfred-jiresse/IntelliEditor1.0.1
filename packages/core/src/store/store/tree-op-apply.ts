@@ -6,6 +6,7 @@
 // validation live in sibling tree-op-* modules; tree-ops.ts re-exports the public surface.
 /* eslint-disable max-lines -- pre-existing size; furniture lifecycle only adds union narrowing */
 
+import { applyInsertCaption, applySetCaptionNumbers } from './tree-op-captions.ts';
 import { hardBreakAttributes, hardBreakText } from '../package/hard-break.ts';
 import { fieldAtomText } from '../package/field-nodes.ts';
 import { isContentRevisionKind, W14_NAMESPACE_URI } from '../package/ooxml-shared.ts';
@@ -264,6 +265,8 @@ export function applyTreeOp(part: OoxmlPart, op: TreeDocOp, options?: EditOption
 
   if (op.op === 'insertTable') return applyInsertTable(part, op, options);
   if (op.op === 'deleteBlock') return applyDeleteBlock(part, op.blockId, options);
+  if (op.op === 'insertCaption') return applyInsertCaption(part, op, options);
+  if (op.op === 'setCaptionNumbers') return applySetCaptionNumbers(part, op, options);
   if (op.op === 'insertToc') return applyInsertToc(part, op, options);
   if (op.op === 'replaceTocResult') return applyReplaceTocResult(part, op, options);
   if (op.op === 'rewriteTocPageNumbers') return applyRewriteTocPageNumbers(part, op, options);
