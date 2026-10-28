@@ -1,4 +1,4 @@
-// IntelliEditor's two header controls: « Nouveau TFC » and the conformity badge that opens
+// IntelliEditor's header controls: « Nouveau TFC », « Règles… » and the conformity badge that opens
 // the panel. The badge shows the live level (🟢🟠🔴) so the status is visible even with the
 // panel closed — the "notification" the specification asks for.
 
@@ -8,6 +8,7 @@ import { DEMO_SECONDARY_BUTTON, keepCaret } from '../demoButtons';
 import { useConformity } from './ConformityContext';
 import { LEVEL_LABEL, TEXT } from './labels';
 import { NewTfcDialog } from './NewTfcDialog';
+import { RulesDialog } from './RulesDialog';
 
 interface IntelliHeaderActionsProps {
   readonly panelOpen: boolean;
@@ -23,6 +24,7 @@ export function IntelliHeaderActions({
   const editor = useDocxEditor();
   const { report, profile, documentLoaded } = useConformity();
   const [creating, setCreating] = useState(false);
+  const [editingRules, setEditingRules] = useState(false);
   const level = report?.summary.level ?? 'pending';
 
   return (
@@ -35,6 +37,14 @@ export function IntelliHeaderActions({
         onClick={() => setCreating(true)}
       >
         {TEXT.newTfc}
+      </button>
+      <button
+        type="button"
+        style={DEMO_SECONDARY_BUTTON}
+        onMouseDown={keepCaret}
+        onClick={() => setEditingRules(true)}
+      >
+        {TEXT.rules}
       </button>
       <button
         type="button"
@@ -62,6 +72,7 @@ export function IntelliHeaderActions({
           }}
         />
       ) : null}
+      {editingRules ? <RulesDialog onClose={() => setEditingRules(false)} /> : null}
     </>
   );
 }

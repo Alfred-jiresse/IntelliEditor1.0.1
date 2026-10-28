@@ -2,8 +2,9 @@
 //
 // Every number and name a rule compares against lives HERE, never in a rule. That is what
 // makes the engine reusable beyond one faculty: a different university is a different
-// profile, not different code. The UDBL profile is the built-in default; a JSON file with the
-// same shape (see `parse-profile.ts`) can override any part of it.
+// profile, not different code. The UDBL profile is the built-in default; a rules file — plain
+// text (`rules-text.ts`) or JSON (`parse-profile.ts`) — can override any part of it and add
+// requirements of its own (`customRules`).
 
 import type { PageNumberFormat } from '../model/types.ts';
 
@@ -30,6 +31,43 @@ export interface PartSpec {
 export interface RuleOverride {
   readonly enabled?: boolean;
   readonly severity?: Severity;
+}
+
+/**
+ * The kinds of rule an institution can declare in its rules file, without code. Each one is a
+ * fixed, tested check parameterized by data — never a pattern or an expression read from the
+ * file, so a rules file cannot make the checker run anything it was not built to run.
+ */
+export type CustomRuleKind =
+  /** None of `values` may appear (whole words, accents and case ignored). */
+  | 'forbidden-text'
+  /** Every one of `values` must appear somewhere in the zone. */
+  | 'required-text'
+  /** A titled part whose title is one of `values` must exist. */
+  | 'required-part'
+  /** The part titled one of `values` must stay within the word/page bounds. */
+  | 'part-length'
+  /** The whole work (after the cover) must stay within the word/page bounds. */
+  | 'document-length';
+
+/** Where a text rule looks: the running text, the cover page, or everything. */
+export type TextZone = 'body' | 'cover' | 'document';
+
+export interface CustomRuleSpec {
+  /** `perso.<slug>`: how the report and the `rules` overrides address it. */
+  readonly id: string;
+  readonly kind: CustomRuleKind;
+  readonly title: string;
+  readonly severity: Severity;
+  /** The institution's wording, shown to the student as the reason. */
+  readonly reference: string;
+  /** Texts (forbidden/required) or part titles (required-part, part-length). */
+  readonly values: readonly string[];
+  readonly zone: TextZone;
+  readonly minWords?: number;
+  readonly maxWords?: number;
+  readonly minPages?: number;
+  readonly maxPages?: number;
 }
 
 export interface ConformityProfile {
@@ -94,4 +132,6 @@ export interface ConformityProfile {
     readonly chapterMaxPages: number;
   };
   readonly rules: Readonly<Record<string, RuleOverride>>;
+  /** Requirements the institution declared in its rules file, on top of the built-in rules. */
+  readonly customRules: readonly CustomRuleSpec[];
 }

@@ -62,6 +62,11 @@ function bareTitle(text: string): string {
   return normalize(splitNumbering(text).rest);
 }
 
+/** Whether a title, numbering and « Chapitre N : » aside, is one of `aliases`. */
+export function titleMatches(text: string, aliases: readonly string[]): boolean {
+  return matchesAlias(bareTitle(text), aliases);
+}
+
 function matchPart(text: string, specs: readonly PartSpec[]): PartSpec | undefined {
   const bare = bareTitle(text);
   if (PARTIAL.test(bare)) return undefined;

@@ -17,6 +17,7 @@ export const CATEGORY_LABEL: Readonly<Record<RuleCategory, string>> = {
   references: 'Références',
   integrite: 'Intégrité',
   longueur: 'Longueur',
+  etablissement: 'Règles de l’établissement',
 };
 
 export const SEVERITY_LABEL: Readonly<Record<Severity, string>> = {
@@ -32,8 +33,8 @@ export const TEXT = {
   toFix: 'À corriger',
   all: 'Toutes les règles',
   profile: 'Norme',
-  importProfile: 'Importer une norme (JSON)…',
-  exportProfile: 'Exporter la norme',
+  importProfile: 'Importer des règles (.txt, .json)…',
+  exportProfile: 'Télécharger les règles (.txt)',
   resetProfile: 'Revenir à la norme UDBL',
   noReport: 'Analyse du document en cours…',
   allGood: 'Toutes les règles vérifiables sont respectées.',
@@ -42,6 +43,7 @@ export const TEXT = {
   close: 'Fermer le panneau',
   open: 'Conformité du document',
   newTfc: 'Nouveau TFC',
+  rules: 'Règles…',
   analyzedAt: (date: Date) =>
     `Vérifié à ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
   summary: (passed: number, failed: number, skipped: number) =>
@@ -89,3 +91,29 @@ export const PAGE_NUMBER_FORMATS = [
   { value: 'lowerLetter', name: 'a, b, c…' },
   { value: 'upperLetter', name: 'A, B, C…' },
 ] as const;
+
+/** The « Règles… » dialog: replacing the norm without touching the code. */
+export const RULES_TEXT = {
+  title: 'Règles de présentation',
+  intro:
+    'IntelliEditor vérifie le document selon ces règles. Une autre faculté ou université peut les remplacer par son propre fichier, sans modifier le programme.',
+  current: 'Norme active',
+  institution: 'Établissement',
+  content: 'Contenu',
+  counts: (builtIn: number, custom: number) =>
+    `${builtIn} règle(s) intégrée(s) active(s)${custom > 0 ? ` + ${custom} règle(s) propre(s) à l’établissement :` : ''}`,
+  step1:
+    'Téléchargez le modèle : c’est un fichier texte qui contient toutes les règles actuelles, commentées.',
+  step2:
+    'Modifiez les valeurs (marges, police, parties, chapitres…) et ajoutez vos propres règles dans des blocs [regle].',
+  step3:
+    'Importez le fichier : la vérification s’applique aussitôt et la norme est retenue dans ce navigateur.',
+  download: 'Télécharger le modèle (.txt)',
+  import: 'Importer un fichier de règles…',
+  reset: 'Revenir à la norme UDBL',
+  close: 'Fermer',
+  refused: 'Fichier refusé — rien n’a été changé :',
+  warnings: 'Remarques (le reste du fichier a été pris en compte) :',
+  loaded: (name: string) => `Règles « ${name} » chargées.`,
+  more: (count: number) => `… et ${count} autre(s).`,
+} as const;

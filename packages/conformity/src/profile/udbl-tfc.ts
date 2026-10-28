@@ -166,4 +166,5 @@ export const UDBL_TFC_PROFILE: ConformityProfile = {
     chapterMaxPages: 20,
   },
   rules: {},
+  customRules: [],
 };

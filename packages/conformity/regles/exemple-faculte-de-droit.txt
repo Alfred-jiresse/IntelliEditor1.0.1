@@ -1,0 +1,76 @@
+# Exemple : la norme d'une autre faculté, écrite sans toucher au code.
+#
+# Seules les valeurs qui diffèrent de la norme UDBL sont écrites ; tout ce qui n'est pas
+# mentionné garde la valeur UDBL. Importez ce fichier avec le bouton « Règles… ».
+
+[norme]
+nom = Mémoire de licence — Faculté de Droit
+institution = Université de Lubumbashi
+source = Règlement des mémoires, Faculté de Droit (exemple fictif)
+identifiant = unilu-droit-memoire
+
+[page]
+# haut droite bas gauche, en cm
+marges = 2,5 2,5 2,5 3
+position numero = centre
+numerotation liminaires = romain majuscule
+numerotation corps = arabe
+
+[texte]
+police = Arial, Liberation Sans
+taille = 11 pt
+interligne = 1,5
+
+[titres]
+niveau 1 = gras, majuscules, 14 pt
+niveau 2 = gras, 12 pt
+
+[page de garde]
+mentions = Université de Lubumbashi, Faculté de Droit, Mémoire présenté, par, directeur
+
+[structure]
+parties = Dédicace?, Remerciements, Résumé, Sommaire,
+    Introduction générale, Conclusion générale,
+    Bibliographie (références bibliographiques), Annexes?
+chapitres = 2 à 5
+
+[legendes]
+tableaux = dessous
+figures = dessous
+
+[references]
+titre = Bibliographie
+minimum = 15
+
+[regles]
+# La faculté n'impose pas le style IEEE.
+references.ieee = désactivée
+structure.introduction = désactivée
+
+[regle] Rédaction impersonnelle
+type = texte interdit
+valeurs = nous, notre, nos, je, mon, mes
+zone = corps
+gravite = avertissement
+explication = Le mémoire est rédigé à la forme impersonnelle (règlement, art. 4).
+
+[regle] Résumé de 300 mots au plus
+type = longueur de partie
+valeurs = Résumé (Abstract)
+max mots = 300
+gravite = erreur
+explication = Le résumé ne dépasse pas 300 mots (règlement, art. 7).
+
+[regle] Mention de l'année académique
+type = texte obligatoire
+valeurs = année académique
+zone = page de garde
+gravite = erreur
+explication = La page de garde indique l'année académique.
+
+[regle] Entre 40 et 80 pages
+type = longueur du document
+min pages = 40
+max pages = 80
+gravite = avertissement
+explication = Le mémoire compte entre 40 et 80 pages hors annexes (règlement, art. 9).

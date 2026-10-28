@@ -1,36 +1,40 @@
-// The active norm profile: the built-in UDBL one, or a JSON the user imported.
+// The active norm profile: the built-in UDBL one, or a rules file the user imported — plain
+// text (.txt) or JSON.
 //
-// The imported JSON is remembered in this browser only (a per-viewer convenience), and is
-// re-validated through `parseProfile` every time it is read back — storage is as untrusted
-// as the file it came from. Every storage access is guarded: a private window or blocked
-// site data simply means "no remembered profile".
+// The imported file is remembered in this browser only (a per-viewer convenience), as the text
+// the user gave, and is re-validated through `parseRulesFile` every time it is read back —
+// storage is as untrusted as the file it came from. Every storage access is guarded: a private
+// window or blocked site data simply means "no remembered profile".
 
-import { parseProfile, UDBL_TFC_PROFILE, type ConformityProfile } from '@intellieditor/conformity';
+import {
+  parseRulesFile,
+  profileToRulesText,
+  UDBL_TFC_PROFILE,
+  type ConformityProfile,
+} from '@intellieditor/conformity';
 
 const STORAGE_KEY = 'intellieditor:profile:v1';
 const MAX_PROFILE_BYTES = 256 * 1024;
 
 export type ProfileImport =
   | { readonly ok: true; readonly profile: ConformityProfile; readonly warnings: readonly string[] }
-  | { readonly ok: false; readonly errors: readonly string[] };
+  | {
+      readonly ok: false;
+      readonly errors: readonly string[];
+      readonly warnings: readonly string[];
+    };
 
-function fromJsonText(text: string): ProfileImport {
+function fromText(text: string): ProfileImport {
   if (text.length > MAX_PROFILE_BYTES)
-    return { ok: false, errors: ['fichier trop volumineux (256 Ko maximum)'] };
-  let json: unknown;
-  try {
-    json = JSON.parse(text);
-  } catch {
-    return { ok: false, errors: ['le fichier n’est pas un JSON valide'] };
-  }
-  return parseProfile(json);
+    return { ok: false, errors: ['fichier trop volumineux (256 Ko maximum)'], warnings: [] };
+  return parseRulesFile(text);
 }
 
 export function loadStoredProfile(): ConformityProfile {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return UDBL_TFC_PROFILE;
-    const parsed = fromJsonText(raw);
+    const parsed = fromText(raw);
     return parsed.ok ? parsed.profile : UDBL_TFC_PROFILE;
   } catch {
     return UDBL_TFC_PROFILE;
@@ -39,9 +43,9 @@ export function loadStoredProfile(): ConformityProfile {
 
 export async function importProfileFile(file: File): Promise<ProfileImport> {
   if (file.size > MAX_PROFILE_BYTES)
-    return { ok: false, errors: ['fichier trop volumineux (256 Ko maximum)'] };
+    return { ok: false, errors: ['fichier trop volumineux (256 Ko maximum)'], warnings: [] };
   const text = await file.text();
-  const result = fromJsonText(text);
+  const result = fromText(text);
   if (result.ok) {
     try {
       window.localStorage.setItem(STORAGE_KEY, text);
@@ -60,7 +64,17 @@ export function forgetStoredProfile(): void {
   }
 }
 
-/** The active profile as a JSON file, to share it or to start a new one from it. */
-export function profileAsJson(profile: ConformityProfile): string {
-  return JSON.stringify(profile, null, 2);
+/** The active profile as a commented .txt rules file: the template an institution edits. */
+export function profileAsRulesText(profile: ConformityProfile): string {
+  return profileToRulesText(profile);
+}
+
+/** Offer `text` as a file download (UTF-8 with BOM, so Windows Notepad shows the accents). */
+export function downloadText(name: string, text: string): void {
+  const url = URL.createObjectURL(new Blob(['﻿', text], { type: 'text/plain;charset=utf-8' }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = name;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }

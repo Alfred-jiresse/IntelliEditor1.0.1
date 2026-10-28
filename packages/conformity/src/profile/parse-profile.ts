@@ -1,4 +1,5 @@
-// Reading a profile from JSON the user uploads.
+// Reading a profile from JSON — uploaded as is, or produced from a plain-text rules file by
+// `rules-text.ts`, which lands here so both formats share one validation.
 //
 // The JSON is untrusted. It is never spread or merged blindly: every field is read by name,
 // type-checked and range-checked, then laid over the base profile. Unknown keys are ignored
@@ -7,11 +8,14 @@
 import type { PageNumberFormat } from '../model/types.ts';
 import type {
   ConformityProfile,
+  CustomRuleKind,
+  CustomRuleSpec,
   HeadingSpec,
   PartSpec,
   RuleOverride,
   Severity,
   TextCase,
+  TextZone,
 } from './types.ts';
 import { UDBL_TFC_PROFILE } from './udbl-tfc.ts';
 
@@ -212,6 +216,114 @@ function readRules(reader: Reader, root: Json): Readonly<Record<string, RuleOver
   return out;
 }
 
+const RULE_KINDS: readonly CustomRuleKind[] = [
+  'forbidden-text',
+  'required-text',
+  'required-part',
+  'part-length',
+  'document-length',
+];
+const ZONES: readonly TextZone[] = ['body', 'cover', 'document'];
+/** Most custom rules one profile may declare. */
+export const MAX_CUSTOM_RULES = 50;
+const MAX_RULE_TITLE = 120;
+
+/** `Pas de « nous »` → `pas-de-nous`: the id a custom rule gets when the file names none. */
+export function ruleSlug(title: string): string {
+  return (
+    title
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 40) || 'regle'
+  );
+}
+
+function readCustomRules(
+  reader: Reader,
+  root: Json,
+  fallback: readonly CustomRuleSpec[]
+): readonly CustomRuleSpec[] {
+  const value = own(root, 'customRules');
+  if (value === undefined) return fallback;
+  if (!Array.isArray(value) || value.length > MAX_CUSTOM_RULES) {
+    reader.errors.push(`customRules doit être une liste de ${MAX_CUSTOM_RULES} règles au plus`);
+    return fallback;
+  }
+  const ids = new Set<string>();
+  const out: CustomRuleSpec[] = [];
+  value.forEach((item, i) => {
+    const where = `customRules[${i}].`;
+    if (!isObject(item)) {
+      reader.errors.push(`customRules[${i}] doit être un objet`);
+      return;
+    }
+    const before = reader.errors.length;
+    const kind = reader.choice(item, 'kind', where, RULE_KINDS, 'forbidden-text');
+    if (own(item, 'kind') === undefined) reader.errors.push(`${where}kind est obligatoire`);
+    const title = reader.text(item, 'title', where, '');
+    if (!title || title.length > MAX_RULE_TITLE) {
+      reader.errors.push(`${where}title doit être un texte de 1 à ${MAX_RULE_TITLE} caractères`);
+    }
+    const values = reader.texts(item, 'values', where, []);
+    if (kind !== 'document-length' && values.length === 0) {
+      reader.errors.push(`${where}values doit contenir au moins un texte`);
+    }
+    const bound = (key: string, max: number): number | undefined =>
+      own(item, key) === undefined
+        ? undefined
+        : Math.round(reader.number(item, key, where, 0, max, 0));
+    const minWords = bound('minWords', 100_000);
+    const maxWords = bound('maxWords', 100_000);
+    const minPages = bound('minPages', 1000);
+    const maxPages = bound('maxPages', 1000);
+    const isLength = kind === 'part-length' || kind === 'document-length';
+    if (isLength && [minWords, maxWords, minPages, maxPages].every((b) => b === undefined)) {
+      reader.errors.push(`${where} une règle de longueur a besoin d'un minimum ou d'un maximum`);
+    }
+    if (
+      (minWords !== undefined && maxWords !== undefined && minWords > maxWords) ||
+      (minPages !== undefined && maxPages !== undefined && minPages > maxPages)
+    ) {
+      reader.errors.push(`${where} le minimum dépasse le maximum`);
+    }
+    const askedId = own(item, 'id');
+    let id: string;
+    if (askedId !== undefined) {
+      id = typeof askedId === 'string' && /^perso\.[a-z0-9-]{1,48}$/.test(askedId) ? askedId : '';
+      if (!id) reader.errors.push(`${where}id doit s'écrire perso.mots-separes-par-des-tirets`);
+    } else {
+      id = `perso.${ruleSlug(title)}`;
+      for (let n = 2; ids.has(id); n += 1) id = `perso.${ruleSlug(title)}-${n}`;
+    }
+    if (ids.has(id)) reader.errors.push(`${where}id « ${id} » est déjà utilisé`);
+    if (reader.errors.length > before) return;
+    ids.add(id);
+    out.push({
+      id,
+      kind,
+      title,
+      severity: reader.choice(item, 'severity', where, SEVERITIES, 'warning'),
+      reference: reader.text(item, 'reference', where, title),
+      values,
+      zone: reader.choice(
+        item,
+        'zone',
+        where,
+        ZONES,
+        kind === 'required-text' ? 'document' : 'body'
+      ),
+      ...(minWords !== undefined ? { minWords } : {}),
+      ...(maxWords !== undefined ? { maxWords } : {}),
+      ...(minPages !== undefined ? { minPages } : {}),
+      ...(maxPages !== undefined ? { maxPages } : {}),
+    });
+  });
+  return out;
+}
+
 /** Lay a user JSON profile over `base` (the UDBL profile by default). */
 export function parseProfile(
   input: unknown,
@@ -233,6 +345,7 @@ export function parseProfile(
     'references',
     'lengths',
     'rules',
+    'customRules',
     '$schema',
   ];
   for (const key of Object.keys(input))
@@ -424,6 +537,7 @@ export function parseProfile(
       ),
     },
     rules: { ...b.rules, ...readRules(r, input) },
+    customRules: readCustomRules(r, input, b.customRules),
   };
   return r.errors.length > 0
     ? { ok: false, errors: r.errors }

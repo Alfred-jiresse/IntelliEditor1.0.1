@@ -456,3 +456,56 @@
 .intelli-choice__number {
   width: 88px;
 }
+
+/* « Règles… » dialog. */
+.intelli-rules__current {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0 0 10px;
+}
+.intelli-rules__current dt {
+  color: var(--doc-text-muted);
+}
+.intelli-rules__current dd {
+  margin: 0;
+}
+.intelli-rules__custom,
+.intelli-rules__steps {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  line-height: 1.5;
+}
+.intelli-rules__messages {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.intelli-rules__messages ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.intelli-rules__messages-title {
+  margin: 0;
+  font-weight: 600;
+}
+.intelli-rules__messages--error {
+  background: var(--doc-error-bg);
+  color: var(--doc-error);
+}
+.intelli-rules__messages--warning {
+  background: var(--doc-warning-bg);
+  color: var(--doc-warning);
+}
+.intelli-rules__success {
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--doc-success-bg);
+  color: var(--doc-success);
+}
+.intelli-rules__actions {
+  flex-wrap: wrap;
+}

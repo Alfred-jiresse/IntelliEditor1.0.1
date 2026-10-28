@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /* eslint-disable no-console -- a command-line tool: printing the report IS its output. */
-// Command-line checker: `bun packages/conformity/src/cli.ts fichier.docx [--profil regles.json] [--json]`
+// Command-line checker: `bun packages/conformity/src/cli.ts fichier.docx [--profil regles.txt] [--json]`
 //
 // The same engine the editor runs, without the editor — how a batch of deposited TFC is
 // measured for the validation chapter, and how CI can gate a document.
@@ -8,7 +8,7 @@
 import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { checkDocx, type ConformityReport } from './engine.ts';
-import { parseProfile } from './profile/parse-profile.ts';
+import { parseRulesFile } from './profile/rules-text.ts';
 import { UDBL_TFC_PROFILE } from './profile/udbl-tfc.ts';
 
 const LEVEL = {
@@ -44,11 +44,13 @@ const json = args.includes('--json');
 const profileIndex = args.findIndex((a) => a === '--profil' || a === '--profile');
 let profile = UDBL_TFC_PROFILE;
 if (profileIndex >= 0) {
-  const parsed = parseProfile(JSON.parse(readFileSync(args[profileIndex + 1]!, 'utf8')));
+  // A rules file in plain text or JSON, read through the same validation as the editor's.
+  const parsed = parseRulesFile(readFileSync(args[profileIndex + 1]!, 'utf8'));
   if (!parsed.ok) {
-    console.error(`Profil invalide :\n  ${parsed.errors.join('\n  ')}`);
+    console.error(`Fichier de règles refusé :\n  ${parsed.errors.join('\n  ')}`);
     process.exit(2);
   }
+  for (const warning of parsed.warnings) console.error(`Remarque : ${warning}`);
   profile = parsed.profile;
 }
 const files = args.filter(
@@ -56,7 +58,7 @@ const files = args.filter(
 );
 if (files.length === 0) {
   console.error(
-    'Usage : bun packages/conformity/src/cli.ts fichier.docx [...] [--profil regles.json] [--json]'
+    'Usage : bun packages/conformity/src/cli.ts fichier.docx [...] [--profil regles.txt] [--json]'
   );
   process.exit(2);
 }

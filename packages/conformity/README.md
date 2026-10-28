@@ -14,7 +14,7 @@ flowchart LR
   A[Octets .docx] --> B[xml/ — lecture bornée<br/>readZip + readXml du moteur]
   B --> C[reader/ — modèle du document<br/>cascade des styles, sections, champs]
   C --> D[analysis/ — structure du TFC<br/>parties, chapitres, introduction]
-  P[profile/ — la norme en données<br/>UDBL intégré, JSON importable] --> E
+  P[profile/ — la norme en données<br/>UDBL intégré, fichier de règles .txt ou JSON] --> E
   D --> E[rules/ — une règle = une fonction pure]
   E --> F[engine — rapport<br/>score, 🟢🟠🔴, constats localisés]
   P --> T[template/ — « Nouveau TFC »<br/>document conforme au même profil]
@@ -55,8 +55,8 @@ de deviner ; une règle qui plante n'arrête pas les autres.
 bun packages/conformity/src/cli.ts mon-tfc.docx
 bun packages/conformity/src/cli.ts *.docx --json > rapport.json
 
-# Avec une autre norme (JSON partiel, superposé au profil UDBL)
-bun packages/conformity/src/cli.ts mon-tfc.docx --profil ma-norme.json
+# Avec une autre norme (fichier de règles .txt ou .json, superposé à la norme UDBL)
+bun packages/conformity/src/cli.ts mon-tfc.docx --profil packages/conformity/regles/exemple-faculte-de-droit.txt
 
 # Régénérer les documents de démonstration de l'application
 # (le preload fournit le DOM minimal dont la mise en page de l'éditeur a besoin)
@@ -111,23 +111,61 @@ fichier vide. L'application les expose dans ses menus :
 | Insertion → Liste des figures/tableaux | `insertToc` avec `captionLabel` | Liste générée depuis les légendes, mise à jour avec « Mettre à jour la table »                                               |
 | Insertion → Renuméroter les légendes   | `updateCaptionNumbers`          | Corrige les numéros après un déplacement ou une suppression                                                                  |
 
-## Profil JSON
+## Changer de norme sans modifier le code : le fichier de règles
 
-Un profil importé ne contient que ce qui change ; le reste vient du profil UDBL. Chaque champ est
-vérifié (type, bornes) ; les clés inconnues sont ignorées et signalées. Exemple :
+Une autre faculté ou université remplace la norme avec un **fichier texte** (`.txt`), sans
+toucher au programme. Dans l'application : bouton **« Règles… »** → _Télécharger le modèle_,
+modifier, _Importer un fichier de règles_. Un fichier refusé ne change rien et chaque erreur
+indique sa ligne ; la norme importée est retenue dans le navigateur.
 
-```json
-{
-  "name": "Mémoire de Licence — autre faculté",
-  "page": { "marginsCm": { "left": 3, "top": 2.5 }, "liminaryNumberFormat": "decimal" },
-  "typography": { "lineSpacing": 1.5 },
-  "references": { "minimumCount": 15 },
-  "rules": { "longueur.chapitres": { "enabled": false }, "titres.format": { "severity": "error" } }
-}
+Le fichier contient deux choses :
+
+1. **Les valeurs des règles intégrées** (marges, police, titres, parties et leur ordre,
+   chapitres, légendes, références, longueurs, et la gravité de chaque règle, qu'on peut aussi
+   désactiver). Une clé absente garde la valeur UDBL.
+2. **Des règles propres à l'établissement**, un bloc `[regle]` chacune, à partir de cinq types
+   écrits et testés dans `src/rules/custom.ts` :
+
+| Type                   | Ce que la règle vérifie                                                  |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `texte interdit`       | aucun des mots ou expressions de `valeurs` dans la `zone` (mots entiers) |
+| `texte obligatoire`    | chacun des textes de `valeurs` apparaît dans la `zone`                   |
+| `partie obligatoire`   | une partie titrée comme l'un des `valeurs` existe                        |
+| `longueur de partie`   | la partie titrée `valeurs` respecte `min/max mots`, `min/max pages`      |
+| `longueur du document` | le travail (hors page de garde) respecte les bornes                      |
+
+```ini
+[texte]
+police = Arial
+taille = 11 pt
+
+[structure]
+parties = Dédicace?, Remerciements, Sommaire, Introduction générale,
+    Conclusion générale, Bibliographie (références bibliographiques), Annexes?
+chapitres = 2 à 5
+
+[regles]
+references.ieee = désactivée
+
+[regle] Rédaction impersonnelle
+type = texte interdit
+valeurs = nous, notre, nos
+zone = corps
+gravite = avertissement
+explication = Le mémoire est rédigé à la forme impersonnelle.
 ```
 
-Le bouton « Exporter la norme » du panneau produit le profil complet, point de départ pour en
-écrire un nouveau.
+Fichiers fournis dans `regles/` : `regles-udbl-fsi.txt` (la norme UDBL complète et commentée,
+générée par `make-samples`) et `exemple-faculte-de-droit.txt` (une autre norme, avec quatre
+règles propres).
+
+**Sécurité.** Le fichier est une entrée non fiable : taille (256 Ko), nombre et longueur des
+lignes plafonnés, clés lues dans un vocabulaire fixe, valeurs validées par `parseProfile` (le
+même contrôle que pour le JSON). Rien n'est interprété comme du code ni comme une expression
+régulière : les mots d'une règle sont comparés mot à mot, accents et majuscules ignorés.
+
+Le même contenu peut être écrit en **JSON** (`parseRulesFile` reconnaît les deux formats ;
+les règles propres vont dans `customRules`).
 
 ## Points à valider avec le directeur
 

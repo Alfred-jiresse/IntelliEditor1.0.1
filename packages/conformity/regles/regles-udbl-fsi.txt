@@ -1,0 +1,112 @@
+# Règles de présentation — fichier lu par IntelliEditor
+#
+# Modifiez les valeurs après le signe « = », puis importez ce fichier avec le bouton « Règles… ».
+# Une ligne qui commence par # est un commentaire. Une valeur trop longue peut continuer sur
+# les lignes suivantes, en les commençant par des espaces. Les nombres s'écrivent avec une
+# virgule ou un point (2,5 ou 2.5). Une clé absente garde la valeur de la norme UDBL.
+
+[norme]
+nom = TFC — Faculté des Sciences Informatiques (UDBL)
+institution = Université Don Bosco de Lubumbashi
+source = Normalisation des TFC (ESIS 2015-2016), modèle de page de garde UDBL 2025, grille MRS 2026
+identifiant = udbl-fsi-tfc
+
+[page]
+format = 210 x 297
+# haut droite bas gauche, en cm
+marges = 3,5 2,5 2,5 3,5
+# écart accepté, en mm
+tolerance marges = 1
+# gauche, centre ou droite
+position numero = droite
+# arabe, romain, romain majuscule, lettre, lettre majuscule
+numerotation liminaires = romain
+numerotation corps = arabe
+
+[texte]
+# une ou plusieurs polices acceptées, séparées par des virgules
+police = Times New Roman
+taille = 12 pt
+interligne = 1,25
+tolerance interligne = 0,06
+# part des paragraphes qui peuvent s'écarter sans faire échouer la règle
+tolerance ecarts = 5 %
+
+[titres]
+# gras, italique, majuscules ou minuscules, et la taille
+niveau 1 = gras, majuscules, 12 pt
+niveau 2 = gras, 12 pt
+niveau 3 = gras, italique, 12 pt
+niveau 4 = italique, 12 pt
+
+[page de garde]
+# textes qui doivent figurer sur la page de garde
+mentions = universite don bosco de lubumbashi, faculte des sciences informatiques, travail presente et defendu, par, directeur
+
+[structure]
+# Dans l'ordre imposé. « ? » = facultative. Entre parenthèses : d'autres titres acceptés,
+# séparés par « ; ».
+parties = Épigraphe?,
+    Dédicace?,
+    Remerciements? (remerciement),
+    Liste des figures? (table des figures; liste des illustrations),
+    Liste des tableaux?,
+    Liste des équations?,
+    Liste des acronymes? (acronymes; sigles et abreviations; liste des sigles; liste des abreviations),
+    Table des matières (table de matieres; sommaire),
+    Avant-propos,
+    Introduction générale (introduction),
+    Conclusion générale,
+    Références (references bibliographiques; bibliographie; webographie),
+    Annexes? (annexe)
+sections introduction = Contexte?,
+    Problématique,
+    Hypothèses (hypothese),
+    Choix et intérêt du sujet (choix et interet; interet du sujet; choix du sujet),
+    Méthodologie (méthodes et techniques; methode et techniques; approche methodologique),
+    État de l'art (etat de la question; revue de la litterature; revue de litterature),
+    Délimitation du travail (delimitation),
+    Subdivision du travail (subdivision; plan du travail),
+    Outils logiciels et équipements utilisés? (outils logiciels; outils et equipements; outils)
+chapitres = 1 à 4
+introduction et conclusion partielles = oui
+
+[legendes]
+# dessus ou dessous
+tableaux = dessus
+figures = dessous
+numerotation par chapitre = oui
+
+[references]
+titre = Références
+titres acceptes = references bibliographiques, references, bibliographie
+minimum = 10
+style = ieee
+
+[longueurs]
+mots par page = 330
+# en pages
+introduction max = 6
+chapitre max = 20
+
+[regles]
+# Changer la gravité d'une règle intégrée (erreur, avertissement, conseil) ou la désactiver.
+# Exemple : references.ieee = désactivée
+
+
+# ── Règles propres à l'établissement ──────────────────────────────────────────────
+# Un bloc [regle] par exigence. Types possibles :
+#   texte interdit       valeurs = mots ou expressions à éviter ; zone = corps, page de garde ou document
+#   texte obligatoire    valeurs = textes qui doivent apparaître ; zone = corps, page de garde ou document
+#   partie obligatoire   valeurs = titre de la partie (et autres titres acceptés)
+#   longueur de partie   valeurs = titre de la partie ; min mots, max mots, min pages, max pages
+#   longueur du document min mots, max mots, min pages, max pages
+# gravite = erreur, avertissement ou conseil ; explication = le texte montré à l'étudiant.
+#
+# [regle] Rédaction impersonnelle
+# type = texte interdit
+# valeurs = nous, notre, nos
+# zone = corps
+# gravite = avertissement
+# explication = Le TFC est rédigé à la forme impersonnelle.
+

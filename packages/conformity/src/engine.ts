@@ -9,6 +9,7 @@ import type { DocumentModel } from './model/types.ts';
 import type { ConformityProfile, Severity } from './profile/types.ts';
 import { UDBL_TFC_PROFILE } from './profile/udbl-tfc.ts';
 import { readDocumentModel } from './reader/index.ts';
+import { customRules } from './rules/custom.ts';
 import { ALL_RULES } from './rules/index.ts';
 import type { Finding, Rule, RuleCategory, RuleContext } from './rules/types.ts';
 
@@ -117,11 +118,14 @@ function summarize(results: readonly RuleResult[]): ConformitySummary {
   };
 }
 
-/** Check an already-read document model against a profile. Pure and synchronous. */
+/**
+ * Check an already-read document model against a profile. Pure and synchronous. By default the
+ * built-in rules run, then the requirements the profile declares (`customRules`).
+ */
 export function checkDocument(
   document: DocumentModel,
   profile: ConformityProfile = UDBL_TFC_PROFILE,
-  rules: readonly Rule[] = ALL_RULES
+  rules: readonly Rule[] = [...ALL_RULES, ...customRules(profile)]
 ): ConformityReport {
   const structure = analyzeStructure(document, profile);
   const context: RuleContext = { document, structure, profile };

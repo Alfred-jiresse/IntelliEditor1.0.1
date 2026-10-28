@@ -14,6 +14,7 @@ import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { writeZip } from '@docx-editor.dev/core/store';
 import { UDBL_TFC_PROFILE } from '../src/profile/udbl-tfc.ts';
+import { profileToRulesText } from '../src/profile/rules-text-write.ts';
 import {
   contentTypesXml,
   documentRelsXml,
@@ -189,4 +190,9 @@ writeFileSync(
 );
 // The logo « Nouveau TFC » offers by default.
 copyFileSync(join(import.meta.dir, 'assets/logo-udbl.png'), join(out, 'logo-udbl.png'));
+// The UDBL norm as an editable rules file — what « Règles… › Télécharger le modèle » gives.
+writeFileSync(
+  join(import.meta.dir, '../regles/regles-udbl-fsi.txt'),
+  profileToRulesText(UDBL_TFC_PROFILE)
+);
 console.log(`Échantillons écrits dans ${out}`);

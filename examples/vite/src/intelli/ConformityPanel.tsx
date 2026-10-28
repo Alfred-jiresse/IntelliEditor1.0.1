@@ -10,7 +10,7 @@ import type { Finding, RuleCategory, RuleResult } from '@intellieditor/conformit
 import { useConformity } from './ConformityContext';
 import { applyFix, goToFinding } from './editor-actions';
 import { CATEGORY_LABEL, LEVEL_LABEL, TEXT } from './labels';
-import { profileAsJson } from './profile-store';
+import { downloadText, profileAsRulesText } from './profile-store';
 import { RuleResultItem } from './RuleResultItem';
 
 type Filter = 'to-fix' | 'all';
@@ -25,15 +25,6 @@ function groupByCategory(results: readonly RuleResult[]): [RuleCategory, RuleRes
   for (const result of results)
     groups.set(result.category, [...(groups.get(result.category) ?? []), result]);
   return [...groups];
-}
-
-function download(name: string, text: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = name;
-  anchor.click();
-  URL.revokeObjectURL(url);
 }
 
 export function ConformityPanel({ onClose }: { readonly onClose: () => void }) {
@@ -161,7 +152,7 @@ export function ConformityPanel({ onClose }: { readonly onClose: () => void }) {
           <button
             type="button"
             className="intelli-link"
-            onClick={() => download(`${profile.id}.json`, profileAsJson(profile))}
+            onClick={() => downloadText(`regles-${profile.id}.txt`, profileAsRulesText(profile))}
           >
             {TEXT.exportProfile}
           </button>
@@ -172,7 +163,7 @@ export function ConformityPanel({ onClose }: { readonly onClose: () => void }) {
         <input
           ref={fileInput}
           type="file"
-          accept="application/json,.json"
+          accept=".txt,text/plain,.json,application/json"
           hidden
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -181,8 +172,8 @@ export function ConformityPanel({ onClose }: { readonly onClose: () => void }) {
             void importProfile(file).then((result) =>
               setNotice(
                 result.ok
-                  ? `Norme « ${result.profile.name} » chargée.`
-                  : `Norme refusée : ${result.errors.join(' ; ')}`
+                  ? `Règles « ${result.profile.name} » chargées.`
+                  : `Fichier refusé : ${result.errors.slice(0, 3).join(' ; ')}${result.errors.length > 3 ? ' …' : ''}`
               )
             );
           }}

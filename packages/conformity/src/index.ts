@@ -5,7 +5,7 @@
 //   model/     the read model rules see
 //   reader/    xml → model (style cascade, sections, fields)
 //   analysis/  model → thesis structure (parts, chapters, introduction sections)
-//   profile/   the norm as data (UDBL built in, JSON override)
+//   profile/   the norm as data (UDBL built in, plain-text or JSON rules file)
 //   rules/     one pure function per norm requirement
 //   engine     orchestration + report
 //   template/  « Nouveau TFC »: a document that satisfies the same profile
@@ -24,8 +24,17 @@ export type { DocumentModel, ParagraphModel, SectionModel } from './model/types.
 export { analyzeStructure, type DocumentStructure } from './analysis/structure.ts';
 export { UDBL_TFC_PROFILE } from './profile/udbl-tfc.ts';
 export { parseProfile, type ProfileParseResult } from './profile/parse-profile.ts';
-export type { ConformityProfile, Severity } from './profile/types.ts';
+export { parseRulesFile, parseRulesText, type RulesTextResult } from './profile/rules-text.ts';
+export { profileToRulesText } from './profile/rules-text-write.ts';
+export type {
+  ConformityProfile,
+  CustomRuleKind,
+  CustomRuleSpec,
+  Severity,
+  TextZone,
+} from './profile/types.ts';
 export { ALL_RULES } from './rules/index.ts';
+export { customRules } from './rules/custom.ts';
 export type { Finding, FindingLocation, FixSuggestion, Rule, RuleCategory } from './rules/index.ts';
 export {
   createTfcTemplate,

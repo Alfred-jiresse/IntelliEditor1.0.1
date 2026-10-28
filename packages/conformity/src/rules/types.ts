@@ -17,7 +17,9 @@ export type RuleCategory =
   | 'legendes'
   | 'references'
   | 'integrite'
-  | 'longueur';
+  | 'longueur'
+  /** Declared by the institution in its rules file. */
+  | 'etablissement';
 
 /** Where a finding points: a body paragraph, identified the way the editor can find it again. */
 export interface FindingLocation {
