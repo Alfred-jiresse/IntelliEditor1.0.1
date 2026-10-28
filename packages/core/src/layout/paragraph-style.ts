@@ -7,14 +7,22 @@
 import type { OoxmlElement, OoxmlNode, OoxmlProperty } from '@docx-editor.dev/core/store';
 import { borderStrokeWidthPt } from './border-metrics.ts';
 
-/** Whether a paragraph must start a new page (`w:pageBreakBefore`). */
+/**
+ * Whether a paragraph must start a new page (`w:pageBreakBefore`).
+ *
+ * Last statement wins, like every cascaded toggle (`paragraphKeeps`): the bag runs from
+ * `docDefaults` to direct `w:pPr`, so a direct `<w:pageBreakBefore w:val="0"/>` cancels the
+ * break a heading style asserts. Answering "does ANY layer assert it" ignored that negation
+ * and put a blank page before every section-opening heading.
+ */
 export function paragraphBreaksBefore(props: readonly OoxmlProperty[]): boolean {
-  return props.some(
-    (property) =>
-      property.localName === 'pageBreakBefore' &&
-      property.attributes?.val !== '0' &&
-      property.attributes?.val !== 'false'
-  );
+  let breaks = false;
+  for (const property of props) {
+    if (property.localName !== 'pageBreakBefore') continue;
+    const val = property.attributes?.val;
+    breaks = val !== '0' && val !== 'false' && val !== 'off';
+  }
+  return breaks;
 }
 
 /**

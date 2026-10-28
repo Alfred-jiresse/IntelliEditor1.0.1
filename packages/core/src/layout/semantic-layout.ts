@@ -1964,7 +1964,10 @@ function layoutBlocksPass(
     const topExtent = paragraphBorderExtentPt(topEdge);
     const borderExtent = paragraphBorderExtentPt(closingEdge);
 
-    if (paragraphBreaksBefore(props) && (pageFragments.length > 0 || pages.length === 0)) {
+    // `w:pageBreakBefore` on a paragraph that already opens a page is a no-op in Word: the
+    // first paragraph of the document, or of a section that starts on a new page (each
+    // section is laid out with its own empty `pages`), does not get a blank sheet in front.
+    if (paragraphBreaksBefore(props) && pageFragments.length > 0) {
       flushPage();
       previousSpaceAfter = 0;
     }

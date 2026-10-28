@@ -3,6 +3,7 @@
 import { describe, expect, test } from 'bun:test';
 import { readOoxmlPart, type OoxmlPart } from '@docx-editor.dev/core/store';
 import { createFixedMeasurer, layoutSemanticDocument } from '../semantic-layout.ts';
+import { paragraphBreaksBefore } from '../paragraph-style.ts';
 import {
   fragmentsOfParagraph,
   lineAtPosition,
@@ -23,6 +24,11 @@ function load(body: string): OoxmlPart {
 }
 
 const measurer = createFixedMeasurer(6, 14);
+
+const pageBreakBeforeProperty = (val?: string) => ({
+  localName: 'pageBreakBefore',
+  ...(val !== undefined ? { attributes: { val } } : {}),
+});
 const lay = (part: OoxmlPart, geometry?: PageGeometry, revision = 1) =>
   layoutSemanticDocument(part, revision, { measurer, ...(geometry ? { geometry } : {}) });
 
@@ -151,6 +157,34 @@ describe('line breaking and pagination (task 7.3)', () => {
     expect(layout.pages).toHaveLength(2);
     expect(layout.pages[0]!.fragments[0]!.lines[0]!.spans[0]!.text).toBe('first');
     expect(layout.pages[1]!.fragments[0]!.lines[0]!.spans[0]!.text).toBe('second');
+  });
+
+  test('pageBreakBefore on the paragraph that opens the document adds no blank page', () => {
+    const part = load(paragraph('first', '<w:pageBreakBefore/>') + paragraph('second'));
+    const layout = lay(part, { ...SMALL, height: 1000 });
+    expect(layout.pages).toHaveLength(1);
+  });
+
+  test('pageBreakBefore on the first paragraph of a next-page section adds no blank page', () => {
+    const sectionBreak =
+      '<w:p><w:pPr><w:sectPr><w:type w:val="nextPage"/><w:pgSz w:w="12240" w:h="15840"/></w:sectPr></w:pPr></w:p>';
+    const part = load(
+      paragraph('cover') + sectionBreak + paragraph('chapter', '<w:pageBreakBefore/>')
+    );
+    const texts = lay(part).pages.map((page) =>
+      page.fragments.flatMap((f) => f.lines.flatMap((l) => l.spans.map((sp) => sp.text))).join('')
+    );
+    expect(texts.filter((text) => text.trim() === '')).toEqual([]);
+    expect(texts.some((text) => text.includes('chapter'))).toBe(true);
+  });
+
+  test('a direct pageBreakBefore w:val="0" cancels the one a style asserts (last wins)', () => {
+    expect(paragraphBreaksBefore([pageBreakBeforeProperty(), pageBreakBeforeProperty('0')])).toBe(
+      false
+    );
+    expect(paragraphBreaksBefore([pageBreakBeforeProperty('0'), pageBreakBeforeProperty()])).toBe(
+      true
+    );
   });
 
   test('w:br w:type="page" forces a page break inside one paragraph', () => {
